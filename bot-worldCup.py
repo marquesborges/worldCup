@@ -141,10 +141,8 @@ def loadMessage(bot, update):
 
 wc = worldCup.main()
 #getCountries(countries)
-#TOKEN=os.environ['TELEGRAM_TOKEN']
-#PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
-TOKEN = "595074795:AAHVCXh3NJ1_1Qmw59biLPDIbub8JPdKp9k"
-PORT = "8443"
+TOKEN=os.environ['TELEGRAM_TOKEN']
+PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
 
 updater = Updater(TOKEN)
 
