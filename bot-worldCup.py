@@ -168,11 +168,11 @@ dispatcher.add_handler(msg_handler)
 ##dispatcher.add_handler(finish_handler)
 
 if (__name__ == '__main__'):
-    HEROKU_URL = os.environ['HEROKU_URL']
+    #HEROKU_URL = os.environ['HEROKU_URL']
     updater.start_webhook(listen='0.0.0.0',
                           port=PORT,
                           url_path=TOKEN)
-    updater.bot.set_webhook(HEROKU_URL + TOKEN)
+    updater.bot.set_webhook('https://bot-worldcup.herokuapp.com/' + TOKEN)
     updater.idle()
 ##    updater.start_polling()
 
