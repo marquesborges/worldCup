@@ -13,6 +13,7 @@ lxml==4.1.1
 pdfminer.six==20170720
 pdfminer3k==1.3.1
 pdfquery==0.4.3
+pipenv==2018.5.18
 pluggy==0.6.0
 ply==3.11
 py==1.5.2
@@ -26,3 +27,5 @@ requests==2.19.1
 roman==2.0.0
 six==1.11.0
 urllib3==1.23
+virtualenv==16.0.0
+virtualenv-clone==0.3.0
