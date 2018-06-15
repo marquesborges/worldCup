@@ -1,1 +1,1 @@
-web: python3 bot-worldCup.py
+bot: python3 bot-worldCup.py
