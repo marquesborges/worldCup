@@ -8,6 +8,13 @@ pt = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['pt_BR'])
 OFFSET = 127462 - ord('A')
 countries = list()
 matche_date = list()
+week_days = {0: "Segunda",
+             1: "Terça",
+             2: "Quarta",
+             3: "Quinta",
+             4: "Sexta",
+             5: "Sábado",
+             6: "Domingo"}
 
 def MatchTimeLocal(date, time, timezone):
     fmt_datetime = "%Y-%m-%d %H:%M:%S"
@@ -36,11 +43,13 @@ def main():
                 tmz_russia = pytz.timezone("Asia/Yekaterinburg")
                 
             matcheDateTimeLocal = MatchTimeLocal(mt["date"],
-                                                 mt["time"], tmz_russia)
+                                                 mt["time"],
+                                                 tmz_russia)
             
             mt["date_local"] = matcheDateTimeLocal.strftime("%d/%m/%Y")
             mt["time_local"] = matcheDateTimeLocal.strftime("%H:%M")
-            mt["weekday"] = matcheDateTimeLocal.strftime("%A")
+
+            mt["weekday"] = week_days[matcheDateTimeLocal.weekday()]
             
             mt["team1"]["flag"] = getFlagEmojiCode(mt["team1"]["name"],
                                                    mt["team1"]["code"])
