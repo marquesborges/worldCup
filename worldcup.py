@@ -47,17 +47,16 @@ def main():
             mt["team2"]["flag"] = getFlagEmojiCode(mt["team2"]["name"],
                                                    mt["team2"]["code"])
 
-            if ("England" == mt["team1"]["name"]):
+            pt.install()
+            mt["team1"]["name_local"] = _(mt["team1"]["name"])
+            mt["team2"]["name_local"] = _(mt["team2"]["name"])
+
+            if (mt["team1"]["name"] == "England"):
                 mt["team1"]["name_local"] = "Inglaterra"
 
-            if ("England" == mt["team2"]["name"]):
+            if (mt["team2"]["name"] == "England"):
                 mt["team2"]["name_local"] = "Inglaterra"
 
-            if ("England" not in (mt["team1"]["name"],
-                                  mt["team2"]["name"])):
-                pt.install()
-                mt["team1"]["name_local"] = _(mt["team1"]["name"])
-                mt["team2"]["name_local"] = _(mt["team2"]["name"])
     getCountries(matchesWC, countries)
     getMatchDate(matchesWC, matche_date)
     return matchesWC
