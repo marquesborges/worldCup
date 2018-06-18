@@ -1,2 +1,2 @@
 python-3.6.3
-pipenv sync
+pip install -r requeriments.txt
