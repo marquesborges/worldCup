@@ -1,2 +1,2 @@
 python-3.6.3
-pip install -r requeriments.txt
+pipenv install --system --deploy
