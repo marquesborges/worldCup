@@ -11,7 +11,7 @@ import emoji
 import gettext
 
 fmt_datetime = "%d/%m/%Y"
-access_type = "LOCAL"
+access_type = "HEROKU"
 ##def start(bot, update):
 ##    bot.send_message(chat_id=update.message.chat_id, text="Bem vindo ao " + bot.first_name + "!")
 ##
