@@ -46,7 +46,13 @@ def main():
                                                    mt["team1"]["code"])
             mt["team2"]["flag"] = getFlagEmojiCode(mt["team2"]["name"],
                                                    mt["team2"]["code"])
-            
+
+            if ("England" == mt["team1"]["name"]):
+                mt["team1"]["name_local"] = "Inglaterra"
+
+            if ("England" == mt["team2"]["name"]):
+                mt["team2"]["name_local"] = "Inglaterra"
+
             pt.install()
             mt["team1"]["name_local"] = _(mt["team1"]["name"])
             mt["team2"]["name_local"] = _(mt["team2"]["name"])
