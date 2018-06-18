@@ -53,9 +53,11 @@ def main():
             if ("England" == mt["team2"]["name"]):
                 mt["team2"]["name_local"] = "Inglaterra"
 
-            pt.install()
-            mt["team1"]["name_local"] = _(mt["team1"]["name"])
-            mt["team2"]["name_local"] = _(mt["team2"]["name"])
+            if ("England" not in (mt["team1"]["name"],
+                                  mt["team2"]["name"])):
+                pt.install()
+                mt["team1"]["name_local"] = _(mt["team1"]["name"])
+                mt["team2"]["name_local"] = _(mt["team2"]["name"])
     getCountries(matchesWC, countries)
     getMatchDate(matchesWC, matche_date)
     return matchesWC
