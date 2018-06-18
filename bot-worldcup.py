@@ -11,6 +11,7 @@ import emoji
 import gettext
 
 fmt_datetime = "%d/%m/%Y"
+access_type = "LOCAL"
 ##def start(bot, update):
 ##    bot.send_message(chat_id=update.message.chat_id, text="Bem vindo ao " + bot.first_name + "!")
 ##
@@ -35,9 +36,9 @@ def getPartida(bot, update, args):
             apenasResultado = ("resultado" in args)
 
         for a in args:
-            if (a in worldCup.countries):
+            if (a in worldcup.countries):
                 match_str = getByTeam(wc, a, apenasResultado)
-            if (a in worldCup.matche_date):
+            if (a in worldcup.matche_date):
                 match_str = getByDate(wc, a, apenasResultado)
                 
         if (match_str == ""):
@@ -109,11 +110,15 @@ def formatMatchResult(matches_list, resultado=False):
                 if (len(match_dic["goals"+str(i)]) > 0):
                     for g in match_dic["goals"+str(i)]:
                         player = g["name"]
+                        if ("owngoal" in g) and (g["owngoal"] == True):
+                            player += "(GC)"
+                        if ("penalty" in g) and (g["penalty"] == True):
+                            player += "(P)"
+                        minute = str(g["minute"])
                         if "offset" in g: 
-                            minute = str(g["minute"]) + "+" + str(g["offset"])
-                        else:
-                            minute = str(g["minute"])
+                            minute += "+" + str(g["offset"])                            
                         goals.append("%s %s'" % (player, minute))
+                        
                     match_str += "%s(%s)\n" % (match_dic["team"+str(i)]["code"], ",".join(goals))
         else:
             match_str += "%s %s X %s %s\n" % (match_dic["team1"]["flag"],
@@ -131,7 +136,7 @@ def loadMessage(bot, update):
     for user_msg in update.message.text.split(" "):
         user_msg = user_msg.capitalize()
         print(user_msg)
-        if (user_msg in worldCup.countries) | (user_msg in worldCup.matche_date):
+        if (user_msg in worldcup.countries) | (user_msg in worldcup.matche_date):
             args.append(user_msg)
         elif (user_msg.lower() in ["resultado", "resultados"]):
             args.append("resultado")
@@ -139,7 +144,7 @@ def loadMessage(bot, update):
         getPartida(bot, update, args)
     
 
-wc = worldCup.main()
+wc = worldcup.main()
 #getCountries(countries)
 TOKEN=os.environ['TELEGRAM_TOKEN']
 PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
@@ -168,13 +173,15 @@ dispatcher.add_handler(msg_handler)
 ##dispatcher.add_handler(finish_handler)
 
 if (__name__ == '__main__'):
-    HEROKU_URL = os.environ['HEROKU_URL']
-    updater.start_webhook(listen='0.0.0.0',
-                          port=PORT,
-                          url_path=TOKEN)
-    updater.bot.set_webhook(HEROKU_URL + TOKEN)
-    updater.idle()
-##    updater.start_polling()
+    if (access_type == "HEROKU"):
+        HEROKU_URL = os.environ['HEROKU_URL']
+        updater.start_webhook(listen='0.0.0.0',
+                              port=PORT,
+                              url_path=TOKEN)
+        updater.bot.set_webhook(HEROKU_URL + TOKEN)
+        updater.idle()
+    else:
+        updater.start_polling()
 
 
 
