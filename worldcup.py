@@ -6,9 +6,9 @@ import gettext
 
 pt = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['pt_BR'])
 OFFSET = 127462 - ord('A')
-countries = list()
+countries = dict()
 matche_date = list()
-countries_dic = dict()
+countries_flag = dict()
 week_days = {0: "Segunda",
              1: "Terça",
              2: "Quarta",
@@ -70,6 +70,12 @@ def main():
             if (mt["team2"]["name"] == "England"):
                 mt["team2"]["name_local"] = "Inglaterra"
 
+            if (mt["team1"]["name"] == "South Korea"):
+                mt["team1"]["name_local"] = "Coreia do Sul"
+
+            if (mt["team2"]["name"] == "South Korea"):
+                mt["team2"]["name_local"] = "Coreia do Sul"
+
     getCountries(matchesWC, countries)
     getMatchDate(matchesWC, matche_date)
 
@@ -86,20 +92,16 @@ def getClassificacao(grupo):
             continue
 
         if (wc["group"]["letter"] != group_anterior):
-            classificacao += "\n\n`Grupo {} PT PJ SG`\n".format(wc["group"]["letter"].ljust(13))
+            classificacao += "\n`Grupo {} PT PJ SG`\n".format(wc["group"]["letter"].ljust(13))
             group_anterior = (wc["group"]["letter"])
             
         rank = 1
-        for g in wc["group"]["teams"]:                
-            if (g["team"]["country"] == "Korea Republic"):
-                g["team"]["country"] = "South Korea"
-            
+        for g in wc["group"]["teams"]:          
             frmt = "`{} {} {}{}{}{}`\n"
 
-            pt.install()
             classificacao += frmt.format(rank,
-                                         countries_dic[_(g["team"]["country"])],
-                                         _(g["team"]["country"]).ljust(14),
+                                         countries_flag[_(g["team"]["country"])],
+                                         countries[g["team"]["country"]].ljust(14),
                                          str(g["team"]["points"]).rjust(3),
                                          str(g["team"]["games_played"]).rjust(3),
                                          str(g["team"]["goal_differential"]).rjust(3))
@@ -107,21 +109,44 @@ def getClassificacao(grupo):
             
     return classificacao
 
-def getCountries(wc, countries_list):
+def getCurrMatche():
+    matche = {"home_team":{}, "away_team":{}}
+    currMatche = LoadJsonWC("http://worldcup.sfg.io/matches/current")
+    for m in currMatche:
+        pt.install()
+        matche["home_team"] = m["home_team"]
+        matche["home_team"]["country"] = _(m["home_team"]["country"])
+        matche["home_team"]["flag"] = countries_flag[m["home_team"]["country"]]
+        matche["away_team"] = m["away_team"]
+        matche["away_team"]["country"] = _(m["away_team"]["country"])
+        matche["away_team"]["flag"] = countries_flag[m["away_team"]["country"]]
+        matche["status"] = m["status"]
+        matche["stadium"] = m["location"]
+        matche["city"] = m["venue"]
+        matche["time"] = m["time"]
+    return matche
+
+def getCountries(wc, countries_name):
     for match in wc:
         for mt in match["matches"]:
-            if (mt["team1"]["name"] not in countries_list):
-                countries_list.append(mt["team1"]["name"])
-                countries_dic[mt["team1"]["name"]] = mt["team1"]["flag"]
-            if (mt["team2"]["name"] not in countries_list):
-                countries_list.append(mt["team2"]["name"])
-                countries_dic[mt["team2"]["name"]] = mt["team2"]["flag"]
-            if (mt["team1"]["name_local"] not in countries_list):
-                countries_list.append(mt["team1"]["name_local"])
-                countries_dic[mt["team1"]["name_local"]] = mt["team1"]["flag"]
-            if (mt["team2"]["name_local"] not in countries_list):
-                countries_list.append(mt["team2"]["name_local"])
-                countries_dic[mt["team2"]["name_local"]] = mt["team2"]["flag"]
+            pt.install()
+            if (mt["team1"]["name"] not in countries_name):
+                countries_name[mt["team1"]["name"]] = mt["team1"]["name_local"]
+                countries_flag[mt["team1"]["name"]] = mt["team1"]["flag"]
+            if (mt["team2"]["name"] not in countries_name):
+                countries_name[mt["team2"]["name"]] = mt["team2"]["name_local"]
+                countries_flag[mt["team2"]["name"]] = mt["team2"]["flag"]
+            if (mt["team1"]["name_local"] not in countries_flag):
+                countries_name[mt["team1"]["name_local"]] = mt["team1"]["name_local"]
+                countries_flag[mt["team1"]["name_local"]] = mt["team1"]["flag"]
+            if (mt["team2"]["name_local"] not in countries_flag):
+                countries_name[mt["team2"]["name_local"]] = mt["team2"]["name_local"]
+                countries_flag[mt["team2"]["name_local"]] = mt["team2"]["flag"]
+            if (mt["team1"]["name"] == "South Korea"):
+                countries_name[mt["team1"]["name"]] = mt["team1"]["name_local"]
+                countries_flag["Coreia do Sul"] = mt["team1"]["flag"]
+                countries_name["Korea Republic"] = mt["team1"]["name_local"]
+                countries_flag["Korea Republic"] = mt["team1"]["flag"]
     
 def getMatchDate(wc, matches_list):
     for match in wc:
@@ -139,4 +164,7 @@ def getFlagEmojiCode(teamName, teamCode):
             code = pycountry.countries.get(alpha_3=teamCode).alpha_2
         
     code = code.upper()
-    return chr(ord(code[0]) + OFFSET) + chr(ord(code[1]) + OFFSET)
+    if (teamName == "England"):
+        return "\U0001f3f4\U000e0067\U000e0062\U000e0065\U000e006e\U000e0067\U000e007f"
+    else:
+        return chr(ord(code[0]) + OFFSET) + chr(ord(code[1]) + OFFSET)

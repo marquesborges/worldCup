@@ -9,13 +9,13 @@ import worldcup
 from datetime import datetime
 import emoji
 import gettext
+import time
 
 fmt_datetime = "%d/%m/%Y"
 
-try:
-    access_type = os.environ("HEROKU_ACCESS")
-except:
-    access_type = "HEROKU"
+access_type = "LOCAL"
+
+monitorar_partida = False
     
 ##def start(bot, update):
 ##    bot.send_message(chat_id=update.message.chat_id, text="Bem vindo ao " + bot.first_name + "!")
@@ -84,6 +84,33 @@ def getByTeam(wc, teamName, resultado=False):
             mt_str += formatMatchResult(mt, resultado)                
     return mt_str
 
+
+def getPartidaAtual(bot, update):
+    matche = worldcup.getCurrMatche()
+    if ("status" in matche) and (matche["status"] == "in progress"):
+        while (matche["status"] == "in progress"):
+            match_str = "Em andamento: {}\n".format(matche["time"])
+            match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
+                                                     matche["home_team"]["country"],
+                                                     matche["home_team"]["goals"],
+                                                     matche["away_team"]["goals"],
+                                                     matche["away_team"]["flag"],
+                                                     matche["away_team"]["country"])
+            match_str += "Estádio: {}\n".format(matche["stadium"])
+            match_str += "Cidade: {}\n".format(matche["city"])
+            bot.send_message(chat_id=update.message.chat_id, text=match_str)
+            time.sleep(60)
+            if (not monitorar_partida):
+                bot.send_message(chat_id=update.message.chat_id, text="Monitoramento da partida encerrado!")
+                break
+            matche_ant = matche
+            matche = worldcup.getCurrMatche()
+    else:
+        match_str = "Nenhuma partida em andamento!"
+        bot.send_message(chat_id=update.message.chat_id, text=match_str)
+
+def setPartidaAtual(bot, update):
+    monitorar_partida = False
 
 ##def getByTeam(wc):
 ##    mt_str = ""
@@ -182,6 +209,14 @@ dispatcher.add_handler(match_handler)
 class_handler= CommandHandler('classificação', getClassif, pass_args=True)
 
 dispatcher.add_handler(class_handler)
+
+currMatch_handler= CommandHandler('jogo', getPartidaAtual)
+
+dispatcher.add_handler(currMatch_handler)
+
+currStopMatch_handler= CommandHandler('parar', setPartidaAtual)
+
+dispatcher.add_handler(currStopMatch_handler)
 
 msg_handler = MessageHandler(Filters.text, loadMessage)
 
