@@ -15,7 +15,7 @@ fmt_datetime = "%d/%m/%Y"
 try:
     access_type = os.environ("HEROKU_ACCESS")
 except:
-    access_type = "LOCAL"
+    access_type = "HEROKU"
     
 ##def start(bot, update):
 ##    bot.send_message(chat_id=update.message.chat_id, text="Bem vindo ao " + bot.first_name + "!")
