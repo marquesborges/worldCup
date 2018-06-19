@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import logging
-from telegram import Chat, Contact, constants
+from telegram import Chat, Contact, constants, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram.error import BadRequest
 import worldcup
@@ -11,7 +11,12 @@ import emoji
 import gettext
 
 fmt_datetime = "%d/%m/%Y"
-access_type = "HEROKU"
+
+try:
+    access_type = os.environ("HEROKU_ACCESS")
+except:
+    access_type = "LOCAL"
+    
 ##def start(bot, update):
 ##    bot.send_message(chat_id=update.message.chat_id, text="Bem vindo ao " + bot.first_name + "!")
 ##
@@ -50,6 +55,20 @@ def getPartida(bot, update, args):
                 bot.send_message(chat_id=update.message.chat_id, text=txt)
         else:
             bot.send_message(chat_id=update.message.chat_id, text=match_str)
+    except BadRequest:
+        Exception(BadRequest)
+
+def getClassif(bot, update, args):
+    try:
+        group = ""
+        if (len(args) > 0):
+            group = args[0]
+            
+        classificacao = worldcup.getClassificacao(group)
+        
+        bot.send_message(chat_id=update.message.chat_id,
+                         text=classificacao,
+                         parse_mode=ParseMode.MARKDOWN)
     except BadRequest:
         Exception(BadRequest)
 
@@ -159,6 +178,10 @@ dispatcher = updater.dispatcher
 match_handler= CommandHandler('partida', getPartida, pass_args=True)
 
 dispatcher.add_handler(match_handler)
+
+class_handler= CommandHandler('classificação', getClassif, pass_args=True)
+
+dispatcher.add_handler(class_handler)
 
 msg_handler = MessageHandler(Filters.text, loadMessage)
 

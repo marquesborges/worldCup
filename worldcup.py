@@ -8,6 +8,7 @@ pt = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['pt_BR'])
 OFFSET = 127462 - ord('A')
 countries = list()
 matche_date = list()
+countries_dic = dict()
 week_days = {0: "Segunda",
              1: "Terça",
              2: "Quarta",
@@ -23,14 +24,17 @@ def MatchTimeLocal(date, time, timezone):
     result = match_time.astimezone(tmz_brasil)
     return result
 
-def LoadJsonWC(url_js):
+def LoadJsonWC(url_js, chave=None):
     with urllib.request.urlopen(url_js) as url:
         data = json.loads(url.read().decode())
-    result = data["rounds"]
+    if (chave != None):
+        result = data[chave]
+    else:
+        result = data
     return result
 
 def main():
-    matchesWC = LoadJsonWC("https://raw.githubusercontent.com/openfootball/world-cup.json/master/2018/worldcup.json")
+    matchesWC = LoadJsonWC("https://raw.githubusercontent.com/openfootball/world-cup.json/master/2018/worldcup.json", "rounds")
     for rd in matchesWC:
         for mt in rd["matches"]:
             if mt["timezone"] == "UTC+2":
@@ -68,20 +72,57 @@ def main():
 
     getCountries(matchesWC, countries)
     getMatchDate(matchesWC, matche_date)
+
+
+
     return matchesWC
+
+def getClassificacao(grupo):
+    classifWC = LoadJsonWC("http://worldcup.sfg.io/teams/group_results")
+    classificacao = ""
+    group_anterior = ""
+    for wc in classifWC:
+        if (grupo != "") and (grupo != wc["group"]["letter"]):
+            continue
+
+        if (wc["group"]["letter"] != group_anterior):
+            classificacao += "\n\n`Grupo {} PT PJ SG`\n".format(wc["group"]["letter"].ljust(13))
+            group_anterior = (wc["group"]["letter"])
+            
+        rank = 1
+        for g in wc["group"]["teams"]:                
+            if (g["team"]["country"] == "Korea Republic"):
+                g["team"]["country"] = "South Korea"
+            
+            frmt = "`{} {} {}{}{}{}`\n"
+
+            pt.install()
+            classificacao += frmt.format(rank,
+                                         countries_dic[_(g["team"]["country"])],
+                                         _(g["team"]["country"]).ljust(14),
+                                         str(g["team"]["points"]).rjust(3),
+                                         str(g["team"]["games_played"]).rjust(3),
+                                         str(g["team"]["goal_differential"]).rjust(3))
+            rank += 1
+            
+    return classificacao
 
 def getCountries(wc, countries_list):
     for match in wc:
         for mt in match["matches"]:
             if (mt["team1"]["name"] not in countries_list):
                 countries_list.append(mt["team1"]["name"])
+                countries_dic[mt["team1"]["name"]] = mt["team1"]["flag"]
             if (mt["team2"]["name"] not in countries_list):
                 countries_list.append(mt["team2"]["name"])
+                countries_dic[mt["team2"]["name"]] = mt["team2"]["flag"]
             if (mt["team1"]["name_local"] not in countries_list):
                 countries_list.append(mt["team1"]["name_local"])
+                countries_dic[mt["team1"]["name_local"]] = mt["team1"]["flag"]
             if (mt["team2"]["name_local"] not in countries_list):
                 countries_list.append(mt["team2"]["name_local"])
-
+                countries_dic[mt["team2"]["name_local"]] = mt["team2"]["flag"]
+    
 def getMatchDate(wc, matches_list):
     for match in wc:
         for mt in match["matches"]:
