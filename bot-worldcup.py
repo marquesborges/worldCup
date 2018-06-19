@@ -196,8 +196,11 @@ dispatcher.add_handler(msg_handler)
 ##dispatcher.add_handler(finish_handler)
 
 if (__name__ == '__main__'):
+    print("access_type=%s" % (access_type))
+    print("TELEGRAM_PORT=%s" % (PORT))
     if (access_type == "HEROKU"):
         HEROKU_URL = os.environ['HEROKU_URL']
+        print("HEROKU_URL=%s" % (HEROKU_URL))
         updater.start_webhook(listen='0.0.0.0',
                               port=PORT,
                               url_path=TOKEN)
