@@ -13,7 +13,7 @@ import time
 
 fmt_datetime = "%d/%m/%Y"
 
-access_type = "LOCAL"
+access_type = "HEROKU"
 
 monitorar_partida = False
     
