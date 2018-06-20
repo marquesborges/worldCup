@@ -86,6 +86,7 @@ def getByTeam(wc, teamName, resultado=False):
 
 
 def getPartidaAtual(bot, update):
+    monitorar_partida = True
     matche = worldcup.getCurrMatche()
     if ("status" in matche) and (matche["status"] == "in progress"):
         while (matche["status"] == "in progress"):
