@@ -13,7 +13,7 @@ import time
 
 fmt_datetime = "%d/%m/%Y"
 
-access_type = "LOCAL"
+access_type = os.environ["TELEGRAM_SERVER"]
 
 monitorar_partida = (os.environ['TELEGRAM_MONITOR'] == '1')
     
@@ -117,7 +117,6 @@ def getPartidaAtual(bot, update):
             if (not monitorar_partida):
                 bot.send_message(chat_id=update.message.chat_id, text="Monitoramento da partida encerrado!")
                 break
-            matche_ant = matche
             matche = worldcup.getCurrMatche()
     else:
         match_str = "Nenhuma partida em andamento!"
