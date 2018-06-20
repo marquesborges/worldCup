@@ -117,9 +117,27 @@ def getCurrMatche():
         matche["home_team"] = m["home_team"]
         matche["home_team"]["country"] = _(m["home_team"]["country"])
         matche["home_team"]["flag"] = countries_flag[m["home_team"]["country"]]
+        if ("home_team_events" in m):
+            goals = list()
+            for g in m["home_team_events"]:
+                if (g["type_of_event"] == "goal"):
+                    player = g["player"].upper()
+                    minute = g["time"]
+                    goals.append("%s %s" % (player, minute))
+        matche["home_team"]["events"] = ",".join(goals)
+        
         matche["away_team"] = m["away_team"]
         matche["away_team"]["country"] = _(m["away_team"]["country"])
         matche["away_team"]["flag"] = countries_flag[m["away_team"]["country"]]
+        if ("away_team_events" in m):
+            goals = list()
+            for g in m["away_team_events"]:
+                if (g["type_of_event"] == "goal"):
+                    player = g["player"].upper()
+                    minute = g["time"]
+                    goals.append("%s %s" % (player, minute))
+        matche["away_team"]["events"] = ",".join(goals)
+        
         matche["status"] = m["status"]
         matche["stadium"] = m["location"]
         matche["city"] = m["venue"]

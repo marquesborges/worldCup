@@ -13,9 +13,9 @@ import time
 
 fmt_datetime = "%d/%m/%Y"
 
-access_type = "HEROKU"
+access_type = "LOCAL"
 
-monitorar_partida = False
+monitorar_partida = (os.environ['TELEGRAM_MONITOR'] == '1')
     
 ##def start(bot, update):
 ##    bot.send_message(chat_id=update.message.chat_id, text="Bem vindo ao " + bot.first_name + "!")
@@ -86,15 +86,17 @@ def getByTeam(wc, teamName, resultado=False):
 
 
 def getPartidaAtual(bot, update):
-    monitorar_partida = True
     matche = worldcup.getCurrMatche()
+    rs_ant = dict()
+    rs_atu = dict()
     if ("status" in matche) and (matche["status"] == "in progress"):
         rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = "0x0"
         count_msg = 0
         while (matche["status"] == "in progress"):
             count_msg += 1
             rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = str(matche["home_team"]["goals"])+"x"+str(matche["away_team"]["goals"])
-            if (rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] != rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]]) or (count_msg = 10):
+            if (rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] != rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]]) or (count_msg == 10):
+                rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]]
                 match_str = "Em andamento: {}\n".format(matche["time"])
                 match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
                                                          matche["home_team"]["country"],
@@ -102,11 +104,16 @@ def getPartidaAtual(bot, update):
                                                          matche["away_team"]["goals"],
                                                          matche["away_team"]["flag"],
                                                          matche["away_team"]["country"])
+                if (matche["home_team"]["events"] != ""):
+                    match_str += "{}({})\n".format(matche["home_team"]["code"], matche["home_team"]["events"])
+                if (matche["away_team"]["events"] != ""):
+                    match_str += "{}({})\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
                 match_str += "Estádio: {}\n".format(matche["stadium"])
                 match_str += "Cidade: {}\n".format(matche["city"])
                 bot.send_message(chat_id=update.message.chat_id, text=match_str)
                 count_msg = 0
             time.sleep(60)
+            monitorar_partida = (os.environ['TELEGRAM_MONITOR'] == '1')
             if (not monitorar_partida):
                 bot.send_message(chat_id=update.message.chat_id, text="Monitoramento da partida encerrado!")
                 break
@@ -117,7 +124,10 @@ def getPartidaAtual(bot, update):
         bot.send_message(chat_id=update.message.chat_id, text=match_str)
 
 def setPartidaAtual(bot, update):
-    monitorar_partida = False
+    if (os.environ['TELEGRAM_MONITOR'] == '1'):
+        os.environ['TELEGRAM_MONITOR'] = '0'
+    else:
+        os.environ['TELEGRAM_MONITOR'] = '1'
 
 ##def getByTeam(wc):
 ##    mt_str = ""
@@ -240,6 +250,7 @@ dispatcher.add_handler(msg_handler)
 if (__name__ == '__main__'):
     print("access_type=%s" % (access_type))
     print("TELEGRAM_PORT=%s" % (PORT))
+    print("TELEGRAM_MONITOR=%s" % os.environ["TELEGRAM_MONITOR"])
     if (access_type == "HEROKU"):
         HEROKU_URL = os.environ['HEROKU_URL']
         print("HEROKU_URL=%s" % (HEROKU_URL))
