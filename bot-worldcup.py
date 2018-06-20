@@ -91,7 +91,7 @@ def getPartidaAtual(bot, update):
     rs_atu = dict()
     if ("status" in matche) and (matche["status"] == "in progress"):
         rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = "0x0"
-        count_msg = 0
+        count_msg = 9
         while (matche["status"] == "in progress"):
             count_msg += 1
             rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = str(matche["home_team"]["goals"])+"x"+str(matche["away_team"]["goals"])
