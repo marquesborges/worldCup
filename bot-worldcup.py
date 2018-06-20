@@ -176,13 +176,15 @@ def formatMatchResult(matches_list, resultado=False):
 
 def loadMessage(bot, update):
     args = list()
-    for user_msg in update.message.text.split(" "):
-        user_msg = user_msg.capitalize()
-        print(user_msg)
-        if (user_msg in worldcup.countries) | (user_msg in worldcup.matche_date):
-            args.append(user_msg)
-        elif (user_msg.lower() in ["resultado", "resultados"]):
-            args.append("resultado")
+    if(update.message.text in worldcup.countries):
+        args.append(update.message.text)
+    else:
+        for user_msg in update.message.text.split(" "):
+            user_msg = user_msg.capitalize()
+            if (user_msg in worldcup.countries) | (user_msg in worldcup.matche_date):
+                args.append(user_msg)
+            elif (user_msg.lower() in ["resultado", "resultados"]):
+                args.append("resultado")
     if (len(args) > 0):
         getPartida(bot, update, args)
     
@@ -204,7 +206,7 @@ match_handler= CommandHandler('partida', getPartida, pass_args=True)
 
 dispatcher.add_handler(match_handler)
 
-class_handler= CommandHandler('classificação', getClassif, pass_args=True)
+class_handler= CommandHandler(['classificação', 'classificacao', 'grupos', 'grupo'], getClassif, pass_args=True)
 
 dispatcher.add_handler(class_handler)
 
