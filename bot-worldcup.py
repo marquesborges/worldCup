@@ -84,49 +84,30 @@ def getByTeam(wc, teamName, resultado=False):
             mt_str += formatMatchResult(mt, resultado)                
     return mt_str
 
-
-def getPartidaAtual(bot, update):
+def getPartidaAtual(bot, job):
     matche = worldcup.getCurrMatche()
-    rs_ant = dict()
-    rs_atu = dict()
     if ("status" in matche) and (matche["status"] == "in progress"):
-        rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = "0x0"
-        count_msg = 10
-        while (matche["status"] == "in progress"):
-            rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = str(matche["home_team"]["goals"])+"x"+str(matche["away_team"]["goals"])
-            if (rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] != rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]]) or (count_msg == 10):
-                rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]]
-                match_str = "Em andamento: {}\n".format(matche["time"])
-                match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
-                                                         matche["home_team"]["country"],
-                                                         matche["home_team"]["goals"],
-                                                         matche["away_team"]["goals"],
-                                                         matche["away_team"]["flag"],
-                                                         matche["away_team"]["country"])
-                if (matche["home_team"]["events"] != ""):
-                    match_str += "{}({})\n".format(matche["home_team"]["code"], matche["home_team"]["events"])
-                if (matche["away_team"]["events"] != ""):
-                    match_str += "{}({})\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
-                match_str += "Estádio: {}\n".format(matche["stadium"])
-                match_str += "Cidade: {}\n".format(matche["city"])
-                bot.send_message(chat_id=update.message.chat_id, text=match_str)
-                count_msg = 0
-            time.sleep(60)
-            count_msg += 1
-            monitorar_partida = (os.environ['TELEGRAM_MONITOR'] == '1')
-            if (not monitorar_partida):
-                bot.send_message(chat_id=update.message.chat_id, text="Monitoramento da partida encerrado!")
-                break
-            matche = worldcup.getCurrMatche()
+        match_str = "Em andamento: {}\n".format(matche["time"])
+        match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
+                                                 matche["home_team"]["country"],
+                                                 matche["home_team"]["goals"],
+                                                 matche["away_team"]["goals"],
+                                                 matche["away_team"]["flag"],
+                                                 matche["away_team"]["country"])
+        if (matche["home_team"]["events"] != ""):
+            match_str += "{}({})\n".format(matche["home_team"]["code"], matche["home_team"]["events"])
+        if (matche["away_team"]["events"] != ""):
+            match_str += "{}({})\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
+        match_str += "Estádio: {}\n".format(matche["stadium"])
+        match_str += "Cidade: {}\n".format(matche["city"])
+        bot.send_message(chat_id=job.context, text=match_str)
     else:
         match_str = "Nenhuma partida em andamento!"
-        bot.send_message(chat_id=update.message.chat_id, text=match_str)
+        bot.send_message(chat_id=job.context, text=match_str)
+        job.schedule_removal()
 
-def setPartidaAtual(bot, update):
-    if (os.environ['TELEGRAM_MONITOR'] == '1'):
-        os.environ['TELEGRAM_MONITOR'] = '0'
-    else:
-        os.environ['TELEGRAM_MONITOR'] = '1'
+def getJogo(bot, update, job_queue):
+    job_queue.run_repeating(getPartidaAtual, interval=60, first=0, context=update.message.chat_id)
 
 ##def getByTeam(wc):
 ##    mt_str = ""
@@ -212,6 +193,7 @@ TOKEN=os.environ['TELEGRAM_TOKEN']
 PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
 
 updater = Updater(TOKEN)
+j_queue = updater.job_queue
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -226,13 +208,9 @@ class_handler= CommandHandler('classificação', getClassif, pass_args=True)
 
 dispatcher.add_handler(class_handler)
 
-currMatch_handler= CommandHandler('jogo', getPartidaAtual)
+currMatch_handler= CommandHandler('jogo', getJogo, pass_job_queue=True)
 
 dispatcher.add_handler(currMatch_handler)
-
-currStopMatch_handler= CommandHandler('parar', setPartidaAtual)
-
-dispatcher.add_handler(currStopMatch_handler)
 
 msg_handler = MessageHandler(Filters.text, loadMessage)
 
