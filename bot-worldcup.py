@@ -89,17 +89,20 @@ def getPartidaAtual(bot, update):
     monitorar_partida = True
     matche = worldcup.getCurrMatche()
     if ("status" in matche) and (matche["status"] == "in progress"):
+        rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = "0x0"
         while (matche["status"] == "in progress"):
-            match_str = "Em andamento: {}\n".format(matche["time"])
-            match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
-                                                     matche["home_team"]["country"],
-                                                     matche["home_team"]["goals"],
-                                                     matche["away_team"]["goals"],
-                                                     matche["away_team"]["flag"],
-                                                     matche["away_team"]["country"])
-            match_str += "Estádio: {}\n".format(matche["stadium"])
-            match_str += "Cidade: {}\n".format(matche["city"])
-            bot.send_message(chat_id=update.message.chat_id, text=match_str)
+            rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] = str(matche["home_team"]["goals"])+"x"+str(matche["away_team"]["goals"])
+            if (rs_atu[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]] != rs_ant[matche["home_team"]["country"]+"x"+matche["away_team"]["country"]]):
+                match_str = "Em andamento: {}\n".format(matche["time"])
+                match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
+                                                         matche["home_team"]["country"],
+                                                         matche["home_team"]["goals"],
+                                                         matche["away_team"]["goals"],
+                                                         matche["away_team"]["flag"],
+                                                         matche["away_team"]["country"])
+                match_str += "Estádio: {}\n".format(matche["stadium"])
+                match_str += "Cidade: {}\n".format(matche["city"])
+                bot.send_message(chat_id=update.message.chat_id, text=match_str)
             time.sleep(60)
             if (not monitorar_partida):
                 bot.send_message(chat_id=update.message.chat_id, text="Monitoramento da partida encerrado!")
