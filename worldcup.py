@@ -120,8 +120,12 @@ def getCurrMatche():
         if ("home_team_events" in m):
             goals = list()
             for g in m["home_team_events"]:
-                if (g["type_of_event"] == "goal"):
+                if (g["type_of_event"] in ["goal", "goal-own", "goal-penalty"]):
                     player = g["player"].upper()
+                    if(g["type_of_event"] == "goal-own"):
+                        player += "(GC)"
+                    if(g["type_of_event"] == "goal-penalty"):
+                        player += "(P)"
                     minute = g["time"]
                     goals.append("%s %s" % (player, minute))
         matche["home_team"]["events"] = ",".join(goals)

@@ -87,7 +87,11 @@ def getByTeam(wc, teamName, resultado=False):
 def getPartidaAtual(bot, job):
     matche = worldcup.getCurrMatche()
     if ("status" in matche) and (matche["status"] == "in progress"):
-        match_str = "Em andamento: {}\n".format(matche["time"])
+        match_str = "Em andamento: %s\n"
+        if (matche["time"] == "half-time"):
+            match_str = match_str.format("Intervalo")
+        else:
+            match_str = match_str.format(matche["time"])
         match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
                                                  matche["home_team"]["country"],
                                                  matche["home_team"]["goals"],
