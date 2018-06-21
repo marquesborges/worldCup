@@ -6,7 +6,7 @@ from telegram import Chat, Contact, constants, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram.error import BadRequest
 import worldcup
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import emoji
 import gettext
 import time
@@ -87,8 +87,10 @@ def getByTeam(wc, teamName, resultado=False):
 def getPartidaAtual(bot, job):
     matche = worldcup.getCurrMatche()
     if ("status" in matche) and (matche["status"] == "in progress"):
-        match_str = "Em andamento: {}\n"
+        match_str = "Partida em andamento: {}\n"
         if (matche["time"] == "half-time"):
+            job.schedule_removal()
+            job.run_repeating(getPartidaAtual, interval=60, first=(60*15), context=update.message.chat_id)
             match_str = match_str.format("Intervalo")
         else:
             match_str = match_str.format(matche["time"])
@@ -106,9 +108,14 @@ def getPartidaAtual(bot, job):
         match_str += "Cidade: {}\n".format(matche["city"])
         bot.send_message(chat_id=job.context, text=match_str)
     else:
-        match_str = "Nenhuma partida em andamento!"
-        bot.send_message(chat_id=job.context, text=match_str)
         job.schedule_removal()
+        mt = getNextMatch()
+        if (len(mt) > 0):
+            match_str = "Próxima partida\n"
+            match_str += formatMatchResult(mt, resultado=False)
+        else:
+            match_str = "Nenhuma partida prevista."
+        bot.send_message(chat_id=job.context, text=match_str)
 
 def getJogo(bot, update, job_queue):
     job_queue.run_repeating(getPartidaAtual, interval=60, first=0, context=update.message.chat_id)
@@ -128,6 +135,27 @@ def getByDate(wc, DateMatch, resultado=False):
         if (len(mt) > 0):
             mt_str += formatMatchResult(mt, resultado)   
     return mt_str
+
+def getNextMatch():
+    fmt_datetime = "%d/%m/%Y"
+    fmt_time = "%H:%M"
+    horario = datetime.strftime(datetime.today(), fmt_time)
+    DateMatch = date.today()
+    count = 0
+    while count < 10:
+        count += 1
+        for match in wc:
+            mt = list(filter(lambda lbd: DateMatch == datetime.strptime(lbd["date_local"], fmt_datetime).date(), match["matches"]))
+            if (len(mt) > 0):
+                for h in sorted(mt, key=lambda k: k["time_local"]):
+                    if (datetime.strptime(horario, fmt_time) <= datetime.strptime(h["time_local"], fmt_time)):
+                        return [h]
+                    if ((datetime.strptime(horario, fmt_time) <= (datetime.strptime(h["time_local"], fmt_time) + timedelta(days=0, minutes=100)))):
+                        return [h]
+
+        DateMatch += timedelta(days=1)
+        horario = "00:00"
+        
 
 def getMatches(wc, resultado=False):
     mt_str = ""
@@ -182,6 +210,8 @@ def loadMessage(bot, update):
     args = list()
     if(update.message.text in worldcup.countries):
         args.append(update.message.text)
+    elif (update.message.text.lower() == "hoje"):
+        args.append(datetime.strftime(datetime.today(), fmt_datetime))
     else:
         for user_msg in update.message.text.split(" "):
             user_msg = user_msg.capitalize()
