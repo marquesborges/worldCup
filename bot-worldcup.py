@@ -152,8 +152,6 @@ def getNextMatch():
             mt = list(filter(lambda lbd: DateMatch == datetime.strptime(lbd["date_local"], fmt_datetime).date(), match["matches"]))
             if (len(mt) > 0):
                 for h in sorted(mt, key=lambda k: k["time_local"]):
-                    if ((datetime.strptime(horario, fmt_time) <= (datetime.strptime(h["time_local"], fmt_time) + timedelta(days=0, minutes=100)))):
-                        return [h]
                     if (datetime.strptime(horario, fmt_time) <= datetime.strptime(h["time_local"], fmt_time)):
                         return [h]
 
