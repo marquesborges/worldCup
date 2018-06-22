@@ -10,6 +10,7 @@ from datetime import datetime, date, timedelta
 import emoji
 import gettext
 import time
+import pytz
 
 fmt_datetime = "%d/%m/%Y"
 
@@ -143,13 +144,21 @@ def getByDate(wc, DateMatch, resultado=False):
 def getNextMatch():
     fmt_datetime = "%d/%m/%Y"
     fmt_time = "%H:%M"
-    horario = datetime.strftime(datetime.today(), fmt_time)
-    DateMatch = date.today()
+    DateMatch = datetime.now()
+    if (access_type == "LOCAL"):
+        matcheDateTimeLocal = worldcup.MatchTimeLocal(DateMatch.strftime("%Y-%m-%d"),
+                                                      DateMatch.strftime(fmt_time),
+                                                      pytz.timezone("America/Sao_Paulo"))
+    else:
+        matcheDateTimeLocal = worldcup.MatchTimeLocal(DateMatch.strftime("%Y-%m-%d"),
+                                                      DateMatch.strftime(fmt_time),
+                                                      timezone=None)
+    horario = matcheDateTimeLocal.strftime(fmt_time)
     count = 0
     while count < 10:
         count += 1
         for match in wc:
-            mt = list(filter(lambda lbd: DateMatch == datetime.strptime(lbd["date_local"], fmt_datetime).date(), match["matches"]))
+            mt = list(filter(lambda lbd: DateMatch.date() == datetime.strptime(lbd["date_local"], fmt_datetime).date(), match["matches"]))
             if (len(mt) > 0):
                 for h in sorted(mt, key=lambda k: k["time_local"]):
                     if (datetime.strptime(horario, fmt_time) <= datetime.strptime(h["time_local"], fmt_time)):
