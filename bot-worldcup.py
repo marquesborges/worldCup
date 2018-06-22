@@ -152,7 +152,7 @@ def getNextMatch():
     else:
         matcheDateTimeLocal = worldcup.MatchTimeLocal(DateMatch.strftime("%Y-%m-%d"),
                                                       DateMatch.strftime(fmt_time),
-                                                      timezone=None)
+                                                      pytz.timezone("UTC"))
     horario = matcheDateTimeLocal.strftime(fmt_time)
     count = 0
     while count < 10:

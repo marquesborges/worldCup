@@ -17,10 +17,10 @@ week_days = {0: "Segunda",
              5: "Sábado",
              6: "Domingo"}
 
-def MatchTimeLocal(date, time, timezone=None):
+def MatchTimeLocal(date, time, timezone):
     fmt_datetime = "%Y-%m-%d %H:%M:%S"
     tmz_brasil = pytz.timezone("America/Sao_Paulo")
-    if (timezone == None):
+    if (timezone == tmz_brasil):
         timezone = pytz.timezone("UTC")
     match_time = timezone.localize(datetime.strptime(date + " " + time + ":00" ,fmt_datetime))
     result = match_time.astimezone(tmz_brasil)
