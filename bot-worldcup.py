@@ -122,6 +122,7 @@ def getPartidaAtual(bot, job):
         else:
             match_str = "Nenhuma partida prevista."
         bot.send_message(chat_id=job.context, text=match_str)
+    print("getPartidaAtual: {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))) 
 
 def getJogo(bot, update, job_queue):
     job_queue.run_repeating(getPartidaAtual, interval=60, first=0, context=update.message.chat_id)
