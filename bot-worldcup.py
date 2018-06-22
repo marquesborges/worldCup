@@ -49,9 +49,8 @@ def getPartida(bot, update, args):
         if (match_str == ""):
             match_str = getMatches(wc, apenasResultado)
 
-        if (len(match_str) > constants.MAX_MESSAGE_LENGTH):
-            msg = [match_str[i:i + 4096] for i in range(0, len(match_str), 4096)]
-            for txt in msg:
+        if (len(match_str) > constants.MAX_MESSAGE_LENGTH) or ("#" in match_str):
+            for txt in match_str.split("#"):
                 bot.send_message(chat_id=update.message.chat_id, text=txt)
         else:
             bot.send_message(chat_id=update.message.chat_id, text=match_str)
@@ -81,38 +80,43 @@ def getByTeam(wc, teamName, resultado=False):
                                                   lbd["team2"]["name_local"]),
                          match["matches"]))
         if (len(mt) > 0):
-            mt_str += formatMatchResult(mt, resultado)                
+            mt_str += formatMatchResult(mt, resultado, False)                
     return mt_str
 
 def getPartidaAtual(bot, job):
-    matche = worldcup.getCurrMatche()
-    if ("status" in matche) and (matche["status"] == "in progress"):
-        match_str = "Partida em andamento: {}\n"
-        if (matche["time"] == "half-time"):
-            job.schedule_removal()
-            job.run_repeating(getPartidaAtual, interval=60, first=(60*15), context=update.message.chat_id)
-            match_str = match_str.format("Intervalo")
-        else:
-            match_str = match_str.format(matche["time"])
-        match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
-                                                 matche["home_team"]["country"],
-                                                 matche["home_team"]["goals"],
-                                                 matche["away_team"]["goals"],
-                                                 matche["away_team"]["flag"],
-                                                 matche["away_team"]["country"])
-        if (matche["home_team"]["events"] != ""):
-            match_str += "{}({})\n".format(matche["home_team"]["code"], matche["home_team"]["events"])
-        if (matche["away_team"]["events"] != ""):
-            match_str += "{}({})\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
-        match_str += "Estádio: {}\n".format(matche["stadium"])
-        match_str += "Cidade: {}\n".format(matche["city"])
-        bot.send_message(chat_id=job.context, text=match_str)
+    intervalo = False
+    matche_list = worldcup.getCurrMatche()
+    if (len(matche_list) > 0):
+        for matche in matche_list:
+            if ("status" in matche) and (matche["status"] == "in progress"):
+                match_str = "Partida em andamento: {}\n"
+                if (matche["time"] == "half-time"):
+                    intervalo = True
+                    match_str = match_str.format("Intervalo")
+                else:
+                    match_str = match_str.format(matche["time"])
+                match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
+                                                         matche["home_team"]["country"],
+                                                         matche["home_team"]["goals"],
+                                                         matche["away_team"]["goals"],
+                                                         matche["away_team"]["flag"],
+                                                         matche["away_team"]["country"])
+                if (matche["home_team"]["events"] != ""):
+                    match_str += "{}({})\n".format(matche["home_team"]["code"], matche["home_team"]["events"])
+                if (matche["away_team"]["events"] != ""):
+                    match_str += "{}({})\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
+                match_str += "Estádio: {}\n".format(matche["stadium"])
+                match_str += "Cidade: {}\n".format(matche["city"])
+                bot.send_message(chat_id=job.context, text=match_str)
+                if (intervalo == True):
+                    job.schedule_removal()
+                    job.run_repeating(getPartidaAtual, interval=60, first=(60*15), context=update.message.chat_id)
     else:
         job.schedule_removal()
         mt = getNextMatch()
         if (len(mt) > 0):
             match_str = "Próxima partida\n"
-            match_str += formatMatchResult(mt, resultado=False)
+            match_str += formatMatchResult(mt, resultado=False, quebra_str=False)
         else:
             match_str = "Nenhuma partida prevista."
         bot.send_message(chat_id=job.context, text=match_str)
@@ -133,7 +137,7 @@ def getByDate(wc, DateMatch, resultado=False):
     for match in wc:
         mt = list(filter(lambda lbd: datetime.strptime(DateMatch, fmt_datetime) == datetime.strptime(lbd["date_local"], fmt_datetime), match["matches"]))
         if (len(mt) > 0):
-            mt_str += formatMatchResult(mt, resultado)   
+            mt_str += formatMatchResult(mt, resultado, False)   
     return mt_str
 
 def getNextMatch():
@@ -148,9 +152,9 @@ def getNextMatch():
             mt = list(filter(lambda lbd: DateMatch == datetime.strptime(lbd["date_local"], fmt_datetime).date(), match["matches"]))
             if (len(mt) > 0):
                 for h in sorted(mt, key=lambda k: k["time_local"]):
-                    if (datetime.strptime(horario, fmt_time) <= datetime.strptime(h["time_local"], fmt_time)):
-                        return [h]
                     if ((datetime.strptime(horario, fmt_time) <= (datetime.strptime(h["time_local"], fmt_time) + timedelta(days=0, minutes=100)))):
+                        return [h]
+                    if (datetime.strptime(horario, fmt_time) <= datetime.strptime(h["time_local"], fmt_time)):
                         return [h]
 
         DateMatch += timedelta(days=1)
@@ -160,12 +164,12 @@ def getNextMatch():
 def getMatches(wc, resultado=False):
     mt_str = ""
     for match in wc:
-        mt_str += formatMatchResult(match["matches"], resultado)
+        mt_str += formatMatchResult(match["matches"], resultado, True)
     return mt_str
 
-def formatMatchResult(matches_list, resultado=False):
+def formatMatchResult(matches_list, resultado=False, quebra_str=False):
     match_str = ""
-    for match_dic in matches_list:
+    for match_dic in sorted(matches_list, key=lambda k: (k["date_local"], k["time_local"])):
         if (resultado == True) and (match_dic["score1"] == None):
             continue
         match_str += "Partida %s - %s\n" % ((match_dic["num"]), (match_dic["group"]))
@@ -203,7 +207,10 @@ def formatMatchResult(matches_list, resultado=False):
             
         match_str += "Estádio: %s\n" % (match_dic["stadium"]["name"])
         match_str += "Cidade: %s\n" % (match_dic["city"])
-        match_str += "\n"
+        if (quebra_str == True):
+            match_str += "#"
+        else:
+            match_str += "\n"
     return match_str
 
 def loadMessage(bot, update):

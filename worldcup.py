@@ -110,6 +110,7 @@ def getClassificacao(grupo):
     return classificacao
 
 def getCurrMatche():
+    matche_list = list()
     matche = {"home_team":{}, "away_team":{}}
     currMatche = LoadJsonWC("http://worldcup.sfg.io/matches/current")
     for m in currMatche:
@@ -146,7 +147,8 @@ def getCurrMatche():
         matche["stadium"] = m["location"]
         matche["city"] = m["venue"]
         matche["time"] = m["time"]
-    return matche
+        matche_list.append(matche)
+    return matche_list
 
 def getCountries(wc, countries_name):
     for match in wc:
