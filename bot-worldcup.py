@@ -110,7 +110,6 @@ def getPartidaAtual(bot, job):
                 match_str += "Cidade: {}\n".format(matche["city"])
                 bot.send_message(chat_id=job.context, text=match_str)
                 if (intervalo == True):
-                    job.schedule_removal()
                     job.interval = 60*5
                 else:
                     job.interval = 60
