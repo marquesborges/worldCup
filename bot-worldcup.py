@@ -111,7 +111,9 @@ def getPartidaAtual(bot, job):
                 bot.send_message(chat_id=job.context, text=match_str)
                 if (intervalo == True):
                     job.schedule_removal()
-                    job.run_repeating(getPartidaAtual, interval=60, first=(60*15), context=update.message.chat_id)
+                    job.interval = 60*5
+                else:
+                    job.interval = 60
     else:
         job.schedule_removal()
         mt = getNextMatch()
