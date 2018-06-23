@@ -108,7 +108,7 @@ def getPartidaAtual(bot, job):
                     match_str += "'{}({})'\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
                 match_str += "Estádio: {}\n".format(matche["stadium"])
                 match_str += "Cidade: {}\n".format(matche["city"])
-                bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN))
+                bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
                 if (intervalo == True):
                     job.interval = 60*5
                 else:
