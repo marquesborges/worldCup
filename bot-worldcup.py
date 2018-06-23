@@ -195,7 +195,7 @@ def formatMatchResult(matches_list, resultado=False, quebra_str=False):
                                                     match_dic["team2"]["name_local"])
             for i in [1, 2]:
                 goals = list()
-                if (len(match_dic["goals"+str(i)]) > 0):
+                if ("goals"+str(i) in match_dic) and (len(match_dic["goals"+str(i)]) > 0):
                     for g in match_dic["goals"+str(i)]:
                         player = g["name"]
                         if ("owngoal" in g) and (g["owngoal"] == True):
