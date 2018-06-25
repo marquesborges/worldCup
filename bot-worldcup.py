@@ -117,7 +117,10 @@ def getPartidaAtual(bot, job):
         job.schedule_removal()
         mt = getNextMatch()
         if (len(mt) > 0):
-            match_str = "Próxima partida\n"
+            if (len(mt) == 1):
+                match_str = "Próxima partida\n"
+            else:
+                match_str = "Próximas partidas\n"
             match_str += formatMatchResult(mt, resultado=False, quebra_str=False)
         else:
             match_str = "Nenhuma partida prevista."
@@ -157,15 +160,18 @@ def getNextMatch():
                                                       pytz.timezone("UTC"))
     horario = matcheDateTimeLocal.strftime(fmt_time)
     count = 0
+    mt_rst= list()
     while count < 10:
         count += 1
         for match in wc:
             mt = list(filter(lambda lbd: DateMatch.date() == datetime.strptime(lbd["date_local"], fmt_datetime).date(), match["matches"]))
             if (len(mt) > 0):
-                for h in sorted(mt, key=lambda k: k["time_local"]):
-                    if (datetime.strptime(horario, fmt_time) <= datetime.strptime(h["time_local"], fmt_time)):
-                        return [h]
-
+                mt_rst = list(filter(lambda lbd: datetime.strptime(horario, fmt_time) <= datetime.strptime(lbd["time_local"], fmt_time), mt))
+                if (len(mt_rst) > 0):
+                    return mt_rst
+##                for h in sorted(mt, key=lambda k: k["time_local"]):
+##                    if (datetime.strptime(horario, fmt_time) <= datetime.strptime(h["time_local"], fmt_time)):
+##                        return [h]
         DateMatch += timedelta(days=1)
         horario = "00:00"
         
