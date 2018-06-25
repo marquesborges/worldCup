@@ -132,7 +132,7 @@ def getCurrMatche():
                     minute = g["time"]
                     goals.append("%s %s" % (player, minute))
         matche["home_team"]["events"] = ",".join(goals)
-        matche["home_team"]["goals"] = str(len(goals))
+        matche["home_team"]["goals"] = str(len(list(filter(lambda g: not "(GC)" in g, goals))))
         
         matche["away_team"] = m["away_team"]
         matche["away_team"]["country"] = _(m["away_team"]["country"])
@@ -149,7 +149,7 @@ def getCurrMatche():
                     minute = g["time"]
                     goals.append("%s %s" % (player, minute))
         matche["away_team"]["events"] = ",".join(goals)
-        matche["away_team"]["goals"] = str(len(goals))
+        matche["away_team"]["goals"] = str(len(list(filter(lambda g: not "(GC)" in g, goals))))
         
         matche["status"] = m["status"]
         matche["stadium"] = m["location"]

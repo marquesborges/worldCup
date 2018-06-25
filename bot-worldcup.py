@@ -103,9 +103,9 @@ def getPartidaAtual(bot, job):
                                                          matche["away_team"]["flag"],
                                                          matche["away_team"]["country"])
                 if (matche["home_team"]["events"] != ""):
-                    match_str += "'{}({})'\n".format(matche["home_team"]["code"], matche["home_team"]["events"])
+                    match_str += "`{}({})`\n".format(matche["home_team"]["code"], matche["home_team"]["events"])
                 if (matche["away_team"]["events"] != ""):
-                    match_str += "'{}({})'\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
+                    match_str += "`{}({})`\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
                 match_str += "Estádio: {}\n".format(matche["stadium"])
                 match_str += "Cidade: {}\n".format(matche["city"])
                 bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
