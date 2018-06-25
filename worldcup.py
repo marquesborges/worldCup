@@ -124,7 +124,7 @@ def getCurrMatche():
             goals = list()
             for g in m["home_team_events"]:
                 if (g["type_of_event"] in ["goal", "goal-own", "goal-penalty"]):
-                    player = g["player"].upper()
+                    player = " ".join(list(p.capitalize() for p in g["player"].split(" ")))
                     if(g["type_of_event"] == "goal-own"):
                         player += "(GC)"
                     if(g["type_of_event"] == "goal-penalty"):
@@ -141,7 +141,7 @@ def getCurrMatche():
             goals = list()
             for g in m["away_team_events"]:
                 if (g["type_of_event"] in ["goal", "goal-own", "goal-penalty"]):
-                    player = g["player"].upper()
+                    player = " ".join(list(p.capitalize() for p in g["player"].split(" ")))
                     if(g["type_of_event"] == "goal-own"):
                         player += "(GC)"
                     if(g["type_of_event"] == "goal-penalty"):
