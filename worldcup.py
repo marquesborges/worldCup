@@ -113,10 +113,10 @@ def getClassificacao(grupo):
 
 def getCurrMatche():
     matche_list = list()
-    matche = {"home_team":{}, "away_team":{}}
     currMatche = LoadJsonWC("http://worldcup.sfg.io/matches/current")
     for m in currMatche:
         pt.install()
+        matche = {"home_team":{}, "away_team":{}}
         matche["home_team"] = m["home_team"]
         matche["home_team"]["country"] = _(m["home_team"]["country"])
         matche["home_team"]["flag"] = countries_flag[m["home_team"]["country"]]
