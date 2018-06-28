@@ -9,7 +9,9 @@ import time
 import worldcup
 import pytz
 
-global UPD, WC, ACCESS, TOKEN, PORT
+global UPD, ACCESS, TOKEN, PORT
+
+WC = worldcup.WorldCup()
 
 def get_match(bot, update, args):
     print(update.message.chat_id)
@@ -203,7 +205,6 @@ if (__name__ == '__main__'):
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                             level=logging.INFO)
 
-        WC = worldcup.WorldCup()
     except Exception as e:
         print("Método: {}-Erro: {}".format("main",str(e)))
 
