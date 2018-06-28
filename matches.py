@@ -70,10 +70,10 @@ class MatchList:
         if (match.match["date"] not in self.days_of_match):
             self.days_of_match.append(match.match["date"])
 
-        if (len(list(filter(lambda t: match.match["home_team"]["country"] == t["country"], self.team_list))) == 0):
+        if (len(list(filter(lambda t: match.match["home_team"]["country"] == t["country"], self.team_list))) == 0) and (match.match["home_team"]["code"] != "TBD"):
             self.team_list.append(match.match["home_team"])
 
-        if (len(list(filter(lambda t: match.match["away_team"]["country"] == t["country"], self.team_list))) == 0):
+        if (len(list(filter(lambda t: match.match["away_team"]["country"] == t["country"], self.team_list))) == 0) and (match.match["away_team"]["code"] != "TBD"):
             self.team_list.append(match.match["away_team"])
 
         self.matches.append(match.match)
