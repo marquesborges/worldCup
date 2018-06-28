@@ -44,9 +44,6 @@ class WorldCup:
             wc_list = load_json_wc(url_js="https://worldcup.sfg.io/matches", chave=None)
 
             for wc in wc_list:
-                if (wc["home_team"]["code"] == "TBD") or (wc["away_team"]["code"] == "TBD"):
-                    continue
-
                 date = wc["datetime"].split("T")[0]
                 time = wc["datetime"].split("T")[1][0:5]
                 dt_local = match_time_local(date,
@@ -62,6 +59,21 @@ class WorldCup:
                 m.match["stadium"] = wc["location"]
                 m.match["city"] = wc["venue"]
 
+                if (wc["home_team"]["code"] == "TBD") or (wc["away_team"]["code"] == "TBD"):
+                    m.match["home_team"]["country"] = "A Confirmar"
+                    m.match["home_team"]["code"] = "TBD"
+                    m.match["home_team"]["pt_name"] = "A Confirmar"
+                    m.match["home_team"]["flag"] = "\U0001F3F3"
+                    m.match["home_goals"] = ""
+                    
+                    m.match["away_team"]["country"] = "A Confirmar"
+                    m.match["away_team"]["code"] = "TBD"
+                    m.match["away_team"]["pt_name"] = "A Confirmar"
+                    m.match["away_team"]["flag"] = "\U0001F3F3"
+                    m.match["away_goals"] = ""
+                    self.matches.add_match(m)
+                    continue
+                
                 ## Home Team ##
                 m.match["home_team"]["country"] = wc["home_team"]["country"]
                 m.match["home_team"]["code"] = wc["home_team"]["code"]
@@ -159,7 +171,7 @@ class WorldCup:
 
     def match_by_phase(self, match_phase):
         try:
-            match_list = list(filter(lambda p: match_phase in stage_name.values(), self.matches.matches))
+            match_list = list(filter(lambda p: match_phase == p["phase"], self.matches.matches))
             return match_list
         except Exception as e:
             print("Método: {}-Erro: {}".format("match_by_phase",str(e)))

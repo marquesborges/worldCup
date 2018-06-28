@@ -20,7 +20,7 @@ def get_match(bot, update, args):
         in_line = False
         if (len(args) > 0):
             arguments = " ".join(list(a for a in args))
-
+            
             if (arguments in WC.matches.days_of_match):
                 match_list = WC.match_by_date(arguments)
             elif (arguments in worldcup.stage_name.values()):
@@ -35,11 +35,16 @@ def get_match(bot, update, args):
 
         if (len(match_str) > constants.MAX_MESSAGE_LENGTH) or ("#" in match_str):
             for txt in match_str.split("#"):
-                bot.send_message(chat_id=update.message.chat_id,
-                                 text=txt)
+                if (txt != ""):
+                    bot.send_message(chat_id=update.message.chat_id,
+                                     text=txt)
         else:
-            bot.send_message(chat_id=update.message.chat_id,
-                             text=match_str)
+            if (match_str != ""):
+                bot.send_message(chat_id=update.message.chat_id,
+                                 text=match_str)
+            else:
+                bot.send_message(chat_id=update.message.chat_id,
+                                 text="Nenhuma partida prevista.")
     except Exception as e:
          print("Método: {}-Erro: {}".format("get_match",str(e)))
 
@@ -54,15 +59,15 @@ def get_classif_group(bot, update, args):
         group_before = ""
         for wc in WC.classification:
             if (wc["group"] != group_before):
-                classification += "\n`Grupo {} PT PJ VT DE GP GC SG`\n".format(wc["group"].ljust(13))
+                classification += "\n`Grupo {} PT VT EM DE GP GC SG`\n".format(wc["group"])
                 group_before = (wc["group"])
                 rank = 1
-            classification += "`{} {}{}{}{}{}{}{}{}{}`\n".format(rank,
+            classification += "`{}.{}{}{}{}{}{}{}{}{}`\n".format(rank,
                                                                  wc["flag"],
                                                                  wc["code"].ljust(3),
                                                                  str(wc["statistic"]["points"]).rjust(3),
-                                                                 str(wc["statistic"]["games_played"]).rjust(3),
                                                                  str(wc["statistic"]["wins"]).rjust(3),
+                                                                 str(wc["statistic"]["draws"]).rjust(3),
                                                                  str(wc["statistic"]["losses"]).rjust(3),
                                                                  str(wc["statistic"]["goals_for"]).rjust(3),
                                                                  str(wc["statistic"]["goals_against"]).rjust(3),
@@ -126,18 +131,18 @@ def update_matches(bot, update):
 def load_match_formated(matches_list, result=False, change_line=False, curr_match=False):
     try:
         match_str = ""
-        for match in sorted(matches_list, key=lambda k: (k["date"], k["time"])):
+        for match in sorted(matches_list, key=lambda k: (datetime.strptime(k["date"],"%d/%m/%Y"), datetime.strptime(k["time"], "%H:%M"))):
             if (result == True) and (match["score1"] == None):
                 continue
 
-            match_str += "Fase: {}\n".format(match["phase"])
+            match_str += "Fase: {}".format(match["phase"])
 
             if (match["phase"] == "Primeira Fase"):
-                match_str += "Grupo {}\n".format(match["home_team"]["group"])
+                match_str += " - Grupo {}".format(match["home_team"]["group"])
 
-            match_str += "{} - {} às {}\n".format(match["wday"],
-                                                  match["date"],
-                                                  match["time"])
+            match_str += "\n{} - {} às {}\n".format(match["wday"],
+                                                    match["date"],
+                                                    match["time"])
             ## Date/Time of Match ##
             if (curr_match == True):
                 if (match["status"] == "in progress"):
