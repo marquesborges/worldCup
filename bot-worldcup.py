@@ -65,7 +65,7 @@ def get_classif_group(bot, update, args):
         bot.send_message(chat_id=update.message.chat_id,
                          text=classification,
                          parse_mode=ParseMode.MARKDOWN)
-    except Exception e:
+    except Exception as e:
         print("Método: {}-Erro: {}".format("get_classif_group",str(e)))
 
 def load_current_match(bot, job):
