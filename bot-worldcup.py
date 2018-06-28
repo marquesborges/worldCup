@@ -101,25 +101,20 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
         if (result == True) and (match["score1"] == None):
             continue
 
-        match_str += "Fase {}".format(match["phase"])
-
         if (match["phase"] == "First stage"):
-            match_str += " - Grupo {}".format(match["home_team"]["group"])
+            match_str += "Grupo {}\n".format(match["home_team"]["group"])
 
-        match_str += "\n"
-
+        match_str += "{} - {} às {}\n".format(match["wday"],
+                                              match["date"],
+                                              match["time"])
         ## Date/Time of Match ##
         if (curr_match == True):
             if (match["status"] == "in progress"):
-                match_str = "Partida em andamento: {}\n"
+                match_str += "Partida em andamento: {}\n"
                 if (match["time"] == "half-time"):
                     match_str = match_str.format("Intervalo")
                 else:
-                    match_str = match_str.format(match["time"])
-        else:
-            match_str += "{} - {} às {}\n".format(match["wday"],
-                                                  match["date"],
-                                                  match["time"])
+                    match_str = match_str.format(match["time_match"])
 
         ## Match's Team ##
         match_str += "{} {} {} X {} {} {}\n".format(match["home_team"]["flag"],
