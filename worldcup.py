@@ -108,9 +108,9 @@ class WorldCup:
                     s.stat["goals_differential"] = rs["goal_differential"]
                     self.matches.team_list[e_team[0]]["statistic"] = s.stat
                 for e_match in enumerate(self.matches.matches):
-                    if (e_match[1]["home_team"]["code"] == self.matches.team_list[e_team[0]]["group"]) and (e_match[1]["home_team"]["group"] == None):
+                    if (e_match[1]["home_team"]["code"] == self.matches.team_list[e_team[0]]["code"]) and (e_match[1]["home_team"]["group"] == None):
                         self.matches.matches[e_match[0]]["home_team"]["group"] = self.matches.team_list[e_team[0]]["group"]
-                    if (e_match[1]["away_team"]["code"] == self.matches.team_list[e_team[0]]["group"]) and (e_match[1]["away_team"]["group"] == None):
+                    if (e_match[1]["away_team"]["code"] == self.matches.team_list[e_team[0]]["code"]) and (e_match[1]["away_team"]["group"] == None):
                         self.matches.matches[e_match[0]]["away_team"]["group"] = self.matches.team_list[e_team[0]]["group"]
 
     def group_classification(self, group=None):
@@ -175,7 +175,7 @@ class WorldCup:
         self.next_match = list()
         today_now = datetime.now()
         local_datetime = match_time_local(today_now.strftime("%Y-%m-%d"),
-                                          today_now.strftime("%H:%M:%S"),
+                                          today_now.strftime("%H:%M"),
                                           pytz.timezone("UTC"))
         local_time = local_datetime.strftime(time_frmt)
         count = 1
@@ -186,7 +186,8 @@ class WorldCup:
                 today_now += timedelta(days=1)
                 local_time = "00:00"
             else:
-                self.next_match = list(filter(lambda lbd: datetime.strptime(horario, time_frmt) <= datetime.strptime(lbd["time"], time_frmt), all_matches_today))
+                print(local_time)
+                self.next_match = list(filter(lambda lbd: datetime.strptime(local_time, time_frmt) <= datetime.strptime(lbd["time"], time_frmt), all_matches_today))
 
 
 
