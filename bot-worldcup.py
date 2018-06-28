@@ -14,7 +14,6 @@ global UPD, ACCESS, TOKEN, PORT
 WC = worldcup.WorldCup()
 
 def get_match(bot, update, args):
-    print(update.message.chat_id)
     try:
         result = False
         match_str = ""
@@ -42,7 +41,6 @@ def get_match(bot, update, args):
          print("Método: {}-Erro: {}".format("get_match",str(e)))
 
 def get_classif_group(bot, update, args):
-    print(update.message.chat_id)
     try:
         grp = None
         if (len(args) > 0):
@@ -71,7 +69,6 @@ def get_classif_group(bot, update, args):
         print("Método: {}-Erro: {}".format("get_classif_group",str(e)))
 
 def load_current_match(bot, job):
-    print(job.context)
     try:
         WC.get_current_matches()
         if (len(WC.current_matches) > 0):
@@ -85,6 +82,7 @@ def load_current_match(bot, job):
                         job.interval = 60
         else:
             job.schedule_removal()
+            WC.get_next_match()
             match = WC.next_match
             if (len(match) > 0):
                 if (len(match) == 1):
@@ -101,7 +99,6 @@ def load_current_match(bot, job):
         job.schedule_removal()
 
 def current_match(bot, update, job_queue):
-    print(update.message.chat_id)
     try:
         job_queue.run_repeating(load_current_match, interval=60, first=0, context=update.message.chat_id)
     except Exception as e:
