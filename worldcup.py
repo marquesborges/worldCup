@@ -183,7 +183,7 @@ class WorldCup:
 
                     l_phase = list(filter(lambda l: (mt["home_team"]["code"] == l["home_team"]["code"]) and (mt["away_team"]["code"] == l["away_team"]["code"]), self.matches.matches))
                     if (len(l_phase) > 0):
-                        m.match["phase"] = l_phase["phase"]
+                        m.match["phase"] = l_phase[0]["phase"]
                     m.match["status"] = mt["status"]
                     m.match["stadium"] = mt["location"]
                     m.match["city"] = mt["venue"]
