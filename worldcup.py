@@ -174,8 +174,8 @@ class WorldCup:
     def get_next_match(self):
         self.next_match = list()
         today_now = datetime.now()
-        local_datetime = match_time_local(today_now.strftime(date_frmt),
-                                          today_now.strftime(time_frmt),
+        local_datetime = match_time_local(today_now.strftime("%Y-%m-%d"),
+                                          today_now.strftime("%H:%M:%S"),
                                           pytz.timezone("UTC"))
         local_time = local_datetime.strftime(time_frmt)
         count = 1
