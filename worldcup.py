@@ -171,7 +171,7 @@ class WorldCup:
 
                 self.current_matches.append(m.match)
 
-    def get_next_match():
+    def get_next_match(self):
         self.next_match = list()
         today_now = datetime.now()
         local_datetime = match_time_local(today_now.strftime(date_frmt),
