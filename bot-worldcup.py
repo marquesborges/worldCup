@@ -104,6 +104,18 @@ def current_match(bot, update, job_queue):
     except Exception as e:
         print("Método: {}-Erro: {}".format("current_match",str(e)))
 
+def update_matches(bot, update):
+    try:
+        bot.send_message(chat_id=update.message.chat_id, text="Atualizando partidas...")
+        WC.load_all_matches()
+        
+        bot.send_message(chat_id=update.message.chat_id, text="Atualizando resultados...")
+        WC.load_match_results()
+        
+        bot.send_message(chat_id=update.message.chat_id, text="Resultados atualizados com sucesso.")
+    except Exception as e:
+        print("Método: {}-Erro: {}".format("update_matches",str(e)))
+
 def load_match_formated(matches_list, result=False, change_line=False, curr_match=False):
     try:
         match_str = ""
@@ -175,6 +187,9 @@ def load_all_dispatcher():
         dispatcher.add_handler(class_handler)
 
         currMatch_handler= CommandHandler('jogo', current_match, pass_job_queue=True)
+        dispatcher.add_handler(currMatch_handler)
+
+        currMatch_handler= CommandHandler('atualiza', update_matches)
         dispatcher.add_handler(currMatch_handler)
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_all_dispatcher",str(e)))
