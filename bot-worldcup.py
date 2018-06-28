@@ -10,6 +10,7 @@ import worldcup
 import pytz
 
 def get_match(bot, update, args):
+    print(update.message.chat_id)
     result = False
     match_str = ""
 
@@ -37,6 +38,7 @@ def get_match(bot, update, args):
         Exception(BadRequest)
 
 def get_classif_group(bot, update, args):
+    print(update.message.chat_id)
     grp = None
     if (len(args) > 0):
         grp = args[0]
@@ -62,6 +64,7 @@ def get_classif_group(bot, update, args):
                      parse_mode=ParseMode.MARKDOWN)
 
 def load_current_match(bot, job):
+    print(job.context)
     try:
         WC.get_current_matches()
         if (len(WC.current_matches) > 0):
@@ -86,10 +89,12 @@ def load_current_match(bot, job):
                 match_str = "Nenhuma partida prevista."
             bot.send_message(chat_id=job.context, text=match_str)
         print("load_current_match: {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
-    except:
+    except Exception as e:
+        print("Erro: {}".format(str(e)))
         job.schedule_removal()
 
 def current_match(bot, update, job_queue):
+    print(update.message.chat_id)
     job_queue.run_repeating(load_current_match, interval=60, first=0, context=update.message.chat_id)
 
 def load_match_formated(matches_list, result=False, change_line=False, curr_match=False):
