@@ -13,7 +13,6 @@ ACCESS = os.environ["TELEGRAM_SERVER"]
 TOKEN = os.environ['TELEGRAM_TOKEN']
 PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
 UPD = Updater(TOKEN)
-WC = list()
 
 def get_match(bot, update, args):
     result = False
@@ -68,29 +67,32 @@ def get_classif_group(bot, update, args):
                      parse_mode=ParseMode.MARKDOWN)
 
 def load_current_match(bot, job):
-    WC.get_current_matches()
-    if (len(WC.current_matches) > 0):
-        for match in WC.current_matches:
-            if (match["status"] == "in progress"):
-                match_str = load_match_formated([match], result=False, change_line=False, curr_match=True)
-                bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
-                if (match["time"] == "half-time"):
-                    job.interval = 60*5
-                else:
-                    job.interval = 60
-    else:
-        job.schedule_removal()
-        match = WC.next_match
-        if (len(match) > 0):
-            if (len(match) == 1):
-                match_str = "Próxima partida\n"
-            else:
-                match_str = "Próximas partidas\n"
-            match_str += load_match_formated(match, result=False, change_line=False, curr_match=False)
+    try:
+        WC.get_current_matches()
+        if (len(WC.current_matches) > 0):
+            for match in WC.current_matches:
+                if (match["status"] == "in progress"):
+                    match_str = load_match_formated([match], result=False, change_line=False, curr_match=True)
+                    bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
+                    if (match["time"] == "half-time"):
+                        job.interval = 60*5
+                    else:
+                        job.interval = 60
         else:
-            match_str = "Nenhuma partida prevista."
-        bot.send_message(chat_id=job.context, text=match_str)
-    print("load_current_match: {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+            job.schedule_removal()
+            match = WC.next_match
+            if (len(match) > 0):
+                if (len(match) == 1):
+                    match_str = "Próxima partida\n"
+                else:
+                    match_str = "Próximas partidas\n"
+                match_str += load_match_formated(match, result=False, change_line=False, curr_match=False)
+            else:
+                match_str = "Nenhuma partida prevista."
+            bot.send_message(chat_id=job.context, text=match_str)
+        print("load_current_match: {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    except:
+        job.schedule_removal()
 
 def current_match(bot, update, job_queue):
     job_queue.run_repeating(load_current_match, interval=60, first=0, context=update.message.chat_id)
@@ -183,6 +185,7 @@ if (__name__ == '__main__'):
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         level=logging.INFO)
 
+    global WC
     WC = worldcup.WorldCup()
 
 
