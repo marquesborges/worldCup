@@ -43,7 +43,7 @@ def get_match(bot, update, args):
         Exception(BadRequest)
 
 def get_classif_group(bot, update, args):
-    grp = ""
+    grp = None
     if (len(args) > 0):
         grp = args[0]
     WC.group_classification(group=grp)
@@ -55,15 +55,12 @@ def get_classif_group(bot, update, args):
             classification += "\n`Grupo {} PT PJ SG`\n".format(wc["group"].ljust(13))
             group_before = (wc["group"])
             rank = 1
-            
-        frmt = "`{} {} {}{}{}{}`\n"
-
-        classification += frmt.format(rank,
-                                      wc["flag"],
-                                      wc["pt_name"].ljust(14),
-                                      str(wc["statistic"]["points"]).rjust(3),
-                                      str(wc["statistic"]["games_played"]).rjust(3),
-                                      str(wc["statistic"]["goals_differential"]).rjust(3))
+        classification += "`{} {} {}{}{}{}`\n".format(rank,
+                                                      wc["flag"],
+                                                      wc["pt_name"].ljust(14),
+                                                      str(wc["statistic"]["points"]).rjust(3),
+                                                      str(wc["statistic"]["games_played"]).rjust(3),
+                                                      str(wc["statistic"]["goals_differential"]).rjust(3))
         rank += 1
 
     bot.send_message(chat_id=update.message.chat_id,
@@ -75,7 +72,7 @@ def load_current_match(bot, job):
     if (len(WC.current_matches) > 0):
         for match in WC.current_matches:
             if (match["status"] == "in progress"):
-                match_str = load_match_formated(match, result=False, change_line=False, curr_match=True)
+                match_str = load_match_formated([match], result=False, change_line=False, curr_match=True)
                 bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
                 if (match["time"] == "half-time"):
                     job.interval = 60*5
