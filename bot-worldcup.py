@@ -54,15 +54,19 @@ def get_classif_group(bot, update, args):
         group_before = ""
         for wc in WC.classification:
             if (wc["group"] != group_before):
-                classification += "\n`Grupo {} PT PJ SG`\n".format(wc["group"].ljust(13))
+                classification += "\n`Grupo {} PT PJ VT DE GP GC SG`\n".format(wc["group"].ljust(13))
                 group_before = (wc["group"])
                 rank = 1
-            classification += "`{} {} {}{}{}{}`\n".format(rank,
-                                                          wc["flag"],
-                                                          wc["pt_name"].ljust(14),
-                                                          str(wc["statistic"]["points"]).rjust(3),
-                                                          str(wc["statistic"]["games_played"]).rjust(3),
-                                                          str(wc["statistic"]["goals_differential"]).rjust(3))
+            classification += "`{} {}{}{}{}{}{}{}{}{}`\n".format(rank,
+                                                                 wc["flag"],
+                                                                 wc["code"].ljust(3),
+                                                                 str(wc["statistic"]["points"]).rjust(3),
+                                                                 str(wc["statistic"]["games_played"]).rjust(3),
+                                                                 str(wc["statistic"]["wins"]).rjust(3),
+                                                                 str(wc["statistic"]["losses"]).rjust(3),
+                                                                 str(wc["statistic"]["goals_for"]).rjust(3),
+                                                                 str(wc["statistic"]["goals_against"]).rjust(3),
+                                                                 str(wc["statistic"]["goals_differential"]).rjust(3))
             rank += 1
 
         bot.send_message(chat_id=update.message.chat_id,
