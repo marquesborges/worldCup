@@ -9,11 +9,6 @@ import time
 import worldcup
 import pytz
 
-ACCESS = os.environ["TELEGRAM_SERVER"]
-TOKEN = os.environ['TELEGRAM_TOKEN']
-PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
-UPD = Updater(TOKEN)
-
 def get_match(bot, update, args):
     result = False
     match_str = ""
@@ -170,6 +165,13 @@ def load_all_dispatcher():
 
 if (__name__ == '__main__'):
 
+    global UPD, WC, ACCESS, TOKEN, PORT
+
+    ACCESS = os.environ["TELEGRAM_SERVER"]
+    TOKEN = os.environ['TELEGRAM_TOKEN']
+    PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
+    UPD = Updater(TOKEN)
+
     load_all_dispatcher()
 
     if (ACCESS == "HEROKU"):
@@ -185,7 +187,6 @@ if (__name__ == '__main__'):
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         level=logging.INFO)
 
-    global WC
     WC = worldcup.WorldCup()
 
 
