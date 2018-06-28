@@ -1,304 +1,201 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import os
 import logging
-from telegram import Chat, Contact, constants, ParseMode
+from telegram import constants, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from datetime import  datetime
 from telegram.error import BadRequest
-import worldcup
-from datetime import datetime, date, timedelta
-import emoji
-import gettext
 import time
+import worldcup
 import pytz
 
-fmt_datetime = "%d/%m/%Y"
+ACCESS = os.environ["TELEGRAM_SERVER"]
+TOKEN = os.environ['TELEGRAM_TOKEN']
+PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
+UPD = Updater(TOKEN)
+WC = list()
 
-access_type = os.environ["TELEGRAM_SERVER"]
+def get_match(bot, update, args):
+    result = False
+    match_str = ""
 
-monitorar_partida = (os.environ['TELEGRAM_MONITOR'] == '1')
-    
-##def start(bot, update):
-##    bot.send_message(chat_id=update.message.chat_id, text="Bem vindo ao " + bot.first_name + "!")
-##
-##def echo(bot, update):
-##    user_name = update.message.chat['first_name'] + " " + update.message.chat['last_name']
-##    user_msg = update.message.text
-##    bot.send_message(chat_id=update.message.chat_id, text="Olá " + user_name + ", você enviou a mensagem: " + user_msg)
-##
-##def unknown(bot, update):
-##    bot.send_message(chat_id=update.message.chat_id, text="Desculpe, não entendi o comando:" + update.message.text)
-##
-##def finish(bot, update):
-##    bot.send_message(chat_id=update.message.chat_id, text="Atividades encerradas! Até mais...")
-##    updater.stop()
+    if (len(args) > 0):
+        result = ("resultado" in args)
 
-def getPartida(bot, update, args):
+    for a in args:
+        match_list = WC.match_by_team(a)
+        if (len(match_list) == 0):
+            match_list = WC.match_by_date(a)
+        match_str = load_match_formated(match_list, result, change_line=False, curr_match=False)
+
+    if (match_str == ""):
+        match_str = load_match_formated(WC.matches.matches, result, change_line=True, curr_match=False)
+
     try:
-        apenasResultado = False
-        match_str = ""
-        
-        if (len(args) > 0):
-            apenasResultado = ("resultado" in args)
-
-        for a in args:
-            if (a in worldcup.countries):
-                match_str = getByTeam(wc, a, apenasResultado)
-            if (a in worldcup.matche_date):
-                match_str = getByDate(wc, a, apenasResultado)
-                
-        if (match_str == ""):
-            match_str = getMatches(wc, apenasResultado)
-
         if (len(match_str) > constants.MAX_MESSAGE_LENGTH) or ("#" in match_str):
             for txt in match_str.split("#"):
-                bot.send_message(chat_id=update.message.chat_id, text=txt)
+                bot.send_message(chat_id=update.message.chat_id,
+                                 text=txt)
         else:
-            bot.send_message(chat_id=update.message.chat_id, text=match_str)
+            bot.send_message(chat_id=update.message.chat_id,
+                             text=match_str)
     except BadRequest:
         Exception(BadRequest)
 
-def getClassif(bot, update, args):
-    try:
-        group = ""
-        if (len(args) > 0):
-            group = args[0]
+def get_classif_group(bot, update, args):
+    grp = ""
+    if (len(args) > 0):
+        grp = args[0]
+    WC.group_classification(group=grp)
+    
+    classification = ""
+    group_before = ""
+    for wc in WC.classification:
+        if (wc["group"] != group_before):
+            classification += "\n`Grupo {} PT PJ SG`\n".format(wc["group"].ljust(13))
+            group_before = (wc["group"])
+            rank = 1
             
-        classificacao = worldcup.getClassificacao(group)
-        
-        bot.send_message(chat_id=update.message.chat_id,
-                         text=classificacao,
-                         parse_mode=ParseMode.MARKDOWN)
-    except BadRequest:
-        Exception(BadRequest)
+        frmt = "`{} {} {}{}{}{}`\n"
 
-def getByTeam(wc, teamName, resultado=False):
-    mt_str = ""
-    for match in wc:
-        mt = list(filter(lambda lbd: teamName in (lbd["team1"]["name"],
-                                                  lbd["team1"]["name_local"],
-                                                  lbd["team2"]["name"],
-                                                  lbd["team2"]["name_local"]),
-                         match["matches"]))
-        if (len(mt) > 0):
-            mt_str += formatMatchResult(mt, resultado, False)                
-    return mt_str
+        classification += frmt.format(rank,
+                                      wc["flag"],
+                                      wc["pt_name"].ljust(14),
+                                      str(wc["statistic"]["points"]).rjust(3),
+                                      str(wc["statistic"]["games_played"]).rjust(3),
+                                      str(wc["statistic"]["goals_differential"]).rjust(3))
+        rank += 1
 
-def getPartidaAtual(bot, job):
-    intervalo = False
-    matche_list = worldcup.getCurrMatche()
-    if (len(matche_list) > 0):
-        for matche in matche_list:
-            if ("status" in matche) and (matche["status"] == "in progress"):
-                match_str = "Partida em andamento: {}\n"
-                if (matche["time"] == "half-time"):
-                    intervalo = True
-                    match_str = match_str.format("Intervalo")
-                else:
-                    match_str = match_str.format(matche["time"])
-                match_str += "{} {} {} x {} {} {}\n".format(matche["home_team"]["flag"],
-                                                         matche["home_team"]["country"],
-                                                         matche["home_team"]["goals"],
-                                                         matche["away_team"]["goals"],
-                                                         matche["away_team"]["flag"],
-                                                         matche["away_team"]["country"])
-                if (matche["home_team"]["events"] != ""):
-                    match_str += "{}({})\n".format(matche["home_team"]["code"], matche["home_team"]["events"])
-                if (matche["away_team"]["events"] != ""):
-                    match_str += "{}({})\n".format(matche["away_team"]["code"], matche["away_team"]["events"])
-                match_str += "Estádio: {}\n".format(matche["stadium"])
-                match_str += "Cidade: {}\n".format(matche["city"])
+    bot.send_message(chat_id=update.message.chat_id,
+                     text=classification,
+                     parse_mode=ParseMode.MARKDOWN)
+
+def load_current_match(bot, job):
+    WC.get_current_matches()
+    if (len(WC.current_matches) > 0):
+        for match in WC.current_matches:
+            if (match["status"] == "in progress"):
+                match_str = load_match_formated(match, result=False, change_line=False, curr_match=True)
                 bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
-                if (intervalo == True):
+                if (match["time"] == "half-time"):
                     job.interval = 60*5
                 else:
                     job.interval = 60
     else:
         job.schedule_removal()
-        mt = getNextMatch()
-        if (len(mt) > 0):
-            if (len(mt) == 1):
+        match = WC.next_match
+        if (len(match) > 0):
+            if (len(match) == 1):
                 match_str = "Próxima partida\n"
             else:
                 match_str = "Próximas partidas\n"
-            match_str += formatMatchResult(mt, resultado=False, quebra_str=False)
+            match_str += load_match_formated(match, result=False, change_line=False, curr_match=False)
         else:
             match_str = "Nenhuma partida prevista."
         bot.send_message(chat_id=job.context, text=match_str)
-    print("getPartidaAtual: {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))) 
+    print("load_current_match: {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-def getJogo(bot, update, job_queue):
-    job_queue.run_repeating(getPartidaAtual, interval=60, first=0, context=update.message.chat_id)
+def current_match(bot, update, job_queue):
+    job_queue.run_repeating(load_current_match, interval=60, first=0, context=update.message.chat_id)
 
-##def getByTeam(wc):
-##    mt_str = ""
-##    teamName = "Brazil"
-##    for match in wc:
-##        mt = list(filter(lambda lbd: teamName in (lbd["team1"]["name"], lbd["team2"]["name"]), match["matches"]))
-##        if (len(mt) > 0):
-##            print(formatMatchResult(mt))
-
-def getByDate(wc, DateMatch, resultado=False):
-    mt_str = ""
-    for match in wc:
-        mt = list(filter(lambda lbd: datetime.strptime(DateMatch, fmt_datetime) == datetime.strptime(lbd["date_local"], fmt_datetime), match["matches"]))
-        if (len(mt) > 0):
-            mt_str += formatMatchResult(mt, resultado, False)   
-    return mt_str
-
-def getNextMatch():
-    fmt_datetime = "%d/%m/%Y"
-    fmt_time = "%H:%M"
-    DateMatch = datetime.now()
-    if (access_type == "LOCAL"):
-        matcheDateTimeLocal = worldcup.MatchTimeLocal(DateMatch.strftime("%Y-%m-%d"),
-                                                      DateMatch.strftime(fmt_time),
-                                                      pytz.timezone("America/Sao_Paulo"))
-    else:
-        matcheDateTimeLocal = worldcup.MatchTimeLocal(DateMatch.strftime("%Y-%m-%d"),
-                                                      DateMatch.strftime(fmt_time),
-                                                      pytz.timezone("UTC"))
-    horario = matcheDateTimeLocal.strftime(fmt_time)
-    count = 0
-    mt_rst= list()
-    while count < 10:
-        count += 1
-        for match in wc:
-            mt = list(filter(lambda lbd: DateMatch.date() == datetime.strptime(lbd["date_local"], fmt_datetime).date(), match["matches"]))
-            if (len(mt) > 0):
-                mt_rst = list(filter(lambda lbd: datetime.strptime(horario, fmt_time) <= datetime.strptime(lbd["time_local"], fmt_time), mt))
-                if (len(mt_rst) > 0):
-                    return mt_rst
-##                for h in sorted(mt, key=lambda k: k["time_local"]):
-##                    if (datetime.strptime(horario, fmt_time) <= datetime.strptime(h["time_local"], fmt_time)):
-##                        return [h]
-        DateMatch += timedelta(days=1)
-        horario = "00:00"
-        
-
-def getMatches(wc, resultado=False):
-    mt_str = ""
-    for match in wc:
-        mt_str += formatMatchResult(match["matches"], resultado, True)
-    return mt_str
-
-def formatMatchResult(matches_list, resultado=False, quebra_str=False):
+def load_match_formated(matches_list, result=False, change_line=False, curr_match=False):
     match_str = ""
-    for match_dic in sorted(matches_list, key=lambda k: (k["date_local"], k["time_local"])):
-        if (resultado == True) and (match_dic["score1"] == None):
+    for match in sorted(matches_list, key=lambda k: (k["date"], k["time"])):
+        if (result == True) and (match["score1"] == None):
             continue
-        match_str += "Partida %s - %s\n" % ((match_dic["num"]), (match_dic["group"]))
-        match_str += "%s - %s às %s\n" % (match_dic["weekday"],
-                                          match_dic["date_local"],
-                                          match_dic["time_local"])
 
-        if (match_dic["score1"] != None):
-            match_str += "%s %s %s X %s %s %s\n" % (match_dic["team1"]["flag"],
-                                                    match_dic["team1"]["name_local"],
-                                                    match_dic["score1"],
-                                                    match_dic["score2"],
-                                                    match_dic["team2"]["flag"],
-                                                    match_dic["team2"]["name_local"])
-            for i in [1, 2]:
-                goals = list()
-                if ("goals"+str(i) in match_dic) and (len(match_dic["goals"+str(i)]) > 0):
-                    for g in match_dic["goals"+str(i)]:
-                        player = g["name"]
-                        if ("owngoal" in g) and (g["owngoal"] == True):
-                            player += "(GC)"
-                        if ("penalty" in g) and (g["penalty"] == True):
-                            player += "(P)"
-                        minute = str(g["minute"])
-                        if "offset" in g: 
-                            minute += "+" + str(g["offset"])                            
-                        goals.append("%s %s'" % (player, minute))
-                        
-                    match_str += "%s(%s)\n" % (match_dic["team"+str(i)]["code"], ",".join(goals))
+        match_str += "Fase {}".format(match["phase"])
+
+        if (match["phase"] == "First stage"):
+            match_str += " - Grupo {}".format(match["home_team"]["group"])
+
+        match_str += "\n"
+
+        ## Date/Time of Match ##
+        if (curr_match == True):
+            if (match["status"] == "in progress"):
+                match_str = "Partida em andamento: {}\n"
+                if (match["time"] == "half-time"):
+                    match_str = match_str.format("Intervalo")
+                else:
+                    match_str = match_str.format(match["time"])
         else:
-            match_str += "%s %s X %s %s\n" % (match_dic["team1"]["flag"],
-                                              match_dic["team1"]["name_local"],
-                                              match_dic["team2"]["flag"],
-                                              match_dic["team2"]["name_local"])
-            
-        match_str += "Estádio: %s\n" % (match_dic["stadium"]["name"])
-        match_str += "Cidade: %s\n" % (match_dic["city"])
-        if (quebra_str == True):
+            match_str += "{} - {} às {}\n".format(match["wday"],
+                                                  match["date"],
+                                                  match["time"])
+
+        ## Match's Team ##
+        match_str += "{} {} {} X {} {} {}\n".format(match["home_team"]["flag"],
+                                                    match["home_team"]["pt_name"],
+                                                    match["home_goals"],
+                                                    match["away_goals"],
+                                                    match["away_team"]["flag"],
+                                                    match["away_team"]["pt_name"])
+
+        ## Team's Events ##
+        goals = list()
+        for g in match["home_event"]:
+            goals.append(g["player"] + " " + g["time"])
+
+        if (len(goals) > 0):
+            match_str += "{}({})\n".format(match["home_team"]["code"],
+                                         ",".join(goals))
+
+        goals = list()
+        for g in match["away_event"]:
+            goals.append(g["player"] + " " + g["time"])
+
+        if (len(goals) > 0):
+            match_str += "{}({})\n".format(match["away_team"]["code"],
+                                         ",".join(goals))
+
+        ## Locality ##
+        match_str += "Estádio: %s\n" % (match["stadium"])
+        match_str += "Cidade: %s\n" % (match["city"])
+
+        if (change_line == True):
             match_str += "#"
         else:
             match_str += "\n"
+
     return match_str
 
-def loadMessage(bot, update):
-    args = list()
-    if(update.message.text in worldcup.countries):
-        args.append(update.message.text)
-    elif (update.message.text.lower() == "hoje"):
-        args.append(datetime.strftime(datetime.today(), fmt_datetime))
-    else:
-        for user_msg in update.message.text.split(" "):
-            user_msg = user_msg.capitalize()
-            if (user_msg in worldcup.countries) | (user_msg in worldcup.matche_date):
-                args.append(user_msg)
-            elif (user_msg.lower() in ["resultado", "resultados"]):
-                args.append("resultado")
-    if (len(args) > 0):
-        getPartida(bot, update, args)
-    
+def load_all_dispatcher():
 
-wc = worldcup.main()
-#getCountries(countries)
-TOKEN=os.environ['TELEGRAM_TOKEN']
-PORT = int(os.environ.get('PORT',os.environ['TELEGRAM_PORT']))
+    dispatcher = UPD.dispatcher
 
-updater = Updater(TOKEN)
-j_queue = updater.job_queue
+    match_handler= CommandHandler('partida', get_match, pass_args=True)
+    dispatcher.add_handler(match_handler)
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+    class_handler= CommandHandler(['classificação', 'classificacao', 'grupos', 'grupo'], get_classif_group, pass_args=True)
+    dispatcher.add_handler(class_handler)
 
-dispatcher = updater.dispatcher
+    currMatch_handler= CommandHandler('jogo', current_match, pass_job_queue=True)
+    dispatcher.add_handler(currMatch_handler)
 
-match_handler= CommandHandler('partida', getPartida, pass_args=True)
-
-dispatcher.add_handler(match_handler)
-
-class_handler= CommandHandler(['classificação', 'classificacao', 'grupos', 'grupo'], getClassif, pass_args=True)
-
-dispatcher.add_handler(class_handler)
-
-currMatch_handler= CommandHandler('jogo', getJogo, pass_job_queue=True)
-
-dispatcher.add_handler(currMatch_handler)
-
-msg_handler = MessageHandler(Filters.text, loadMessage)
-
-dispatcher.add_handler(msg_handler)
-##
-##unknown_handler = MessageHandler(Filters.text, unknown)
-##
-##dispatcher.add_handler(unknown_handler)
-##
-##finish_handler = CommandHandler('finish', finish)
-##
-##dispatcher.add_handler(finish_handler)
 
 if (__name__ == '__main__'):
-    print("access_type=%s" % (access_type))
-    print("TELEGRAM_PORT=%s" % (PORT))
-    print("TELEGRAM_MONITOR=%s" % os.environ["TELEGRAM_MONITOR"])
-    if (access_type == "HEROKU"):
+
+    load_all_dispatcher()
+
+    if (ACCESS == "HEROKU"):
         HEROKU_URL = os.environ['HEROKU_URL']
-        print("HEROKU_URL=%s" % (HEROKU_URL))
-        updater.start_webhook(listen='0.0.0.0',
-                              port=PORT,
-                              url_path=TOKEN)
-        updater.bot.set_webhook(HEROKU_URL + TOKEN)
-        updater.idle()
+        UPD.start_webhook(listen='0.0.0.0',
+                          port=PORT,
+                          url_path=TOKEN)
+        UPD.bot.set_webhook(HEROKU_URL + TOKEN)
+        UPD.idle()
     else:
-        updater.start_polling()
+        UPD.start_polling()
+
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        level=logging.INFO)
+
+    WC = worldcup.WorldCup()
 
 
 
-    
+
+
 
 

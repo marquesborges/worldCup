@@ -1,14 +1,17 @@
-import urllib.request, json
+#!/usr/bin/env python
+
+import urllib.request
+import json
 from datetime import datetime
 import pytz
 import pycountry
 import gettext
+import matches
 
-pt = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['pt_BR'])
-OFFSET = 127462 - ord('A')
-countries = dict()
-matche_date = list()
-countries_flag = dict()
+date_frmt = "%d/%m/%Y"
+time_frmt = "%H:%M"
+pt_br = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=['pt_BR'])
+tmz_brasil = pytz.timezone("America/Sao_Paulo")
 week_days = {0: "Segunda",
              1: "Terça",
              2: "Quarta",
@@ -17,16 +20,204 @@ week_days = {0: "Segunda",
              5: "Sábado",
              6: "Domingo"}
 
-def MatchTimeLocal(date, time, timezone):
-    fmt_datetime = "%Y-%m-%d %H:%M:%S"
-    tmz_brasil = pytz.timezone("America/Sao_Paulo")
-    if (timezone == tmz_brasil):
-        timezone = pytz.timezone("UTC")
-    match_time = timezone.localize(datetime.strptime(date + " " + time + ":00" ,fmt_datetime))
-    result = match_time.astimezone(tmz_brasil)
-    return result
+class WorldCup:
 
-def LoadJsonWC(url_js, chave=None):
+    def __init__(self):
+        self.classification = []
+
+        self.load_all_matches()
+
+        self.load_match_results()
+
+    def load_all_matches(self):
+        self.matches = matches.MatchList()
+        wc_list = load_json_wc(url_js="https://worldcup.sfg.io/matches", chave=None)
+
+        for wc in wc_list:
+            if (wc["home_team"]["code"] == "TBD") or (wc["away_team"]["code"] == "TBD"):
+                continue
+
+            date = wc["datetime"].split("T")[0]
+            time = wc["datetime"].split("T")[1][0:5]
+            dt_local = match_time_local(date,
+                                        time,
+                                        tmz_brasil)
+
+            m = matches.Match()
+            m.match["date"] = dt_local.strftime(date_frmt)
+            m.match["time"] = dt_local.strftime(time_frmt)
+            m.match["wday"] = week_days[dt_local.weekday()]
+            m.match["phase"] = wc["stage_name"]
+            m.match["status"] = wc["status"]
+            m.match["stadium"] = wc["location"]
+            m.match["city"] = wc["venue"]
+
+            ## Home Team ##
+            m.match["home_team"]["country"] = wc["home_team"]["country"]
+            m.match["home_team"]["code"] = wc["home_team"]["code"]
+
+            if (m.match["home_team"]["country"] == "England"):
+                m.match["home_team"]["pt_name"] = "Inglaterra"
+            elif (m.match["home_team"]["country"] == "South Korea"):
+                m.match["home_team"]["pt_name"] = "Coreia do Sul"
+            else:
+                pt_br.install()
+                m.match["home_team"]["pt_name"] = _(wc["home_team"]["country"])
+
+            m.match["home_team"]["flag"] = emoji_code_flag(wc["home_team"]["country"],
+                                                           wc["home_team"]["code"])
+
+            m.match["home_goals"] = wc["home_team"]["goals"]
+
+            ## Away Team ##
+            m.match["away_team"]["country"] = wc["away_team"]["country"]
+            m.match["away_team"]["code"] = wc["away_team"]["code"]
+
+            if (m.match["away_team"]["country"] == "England"):
+                m.match["away_team"]["pt_name"] = "Inglaterra"
+            elif (m.match["away_team"]["country"] == "South Korea"):
+                m.match["away_team"]["pt_name"] = "Coreia do Sul"
+            else:
+                pt_br.install()
+                m.match["away_team"]["pt_name"] = _(wc["away_team"]["country"])
+
+            m.match["away_team"]["flag"] = emoji_code_flag(wc["away_team"]["country"],
+                                                           wc["away_team"]["code"])
+
+            m.match["away_goals"] = wc["away_team"]["goals"]
+
+            ## Events = Goals ##
+            load_team_events(m, wc)
+
+            self.matches.add_match(m)
+
+    def load_match_results(self):
+        rs_list = load_json_wc(url_js="https://worldcup.sfg.io/teams/results", chave=None)
+        for rs in rs_list:
+            for e_team in enumerate(self.matches.team_list):
+                if (e_team[1]["code"] == rs["fifa_code"]):
+                    self.matches.team_list[e_team[0]]["group"] = rs["group_letter"]
+                    s = matches.Statistic()
+                    s.stat["wins"] = rs["wins"]
+                    s.stat["draws"] = rs["draws"]
+                    s.stat["losses"] = rs["losses"]
+                    s.stat["games_played"] = rs["games_played"]
+                    s.stat["points"] = rs["points"]
+                    s.stat["goals_for"] = rs["goals_for"]
+                    s.stat["goals_against"] = rs["goals_against"]
+                    s.stat["goals_differential"] = rs["goal_differential"]
+                    self.matches.team_list[e_team[0]]["statistic"] = s.stat
+                for e_match in enumerate(self.matches.matches):
+                    if (e_match[1]["home_team"]["code"] == self.matches.team_list[e_team[0]]["group"]) and (e_match[1]["home_team"]["group"] == None):
+                        self.matches.matches[e_match[0]]["home_team"]["group"] = self.matches.team_list[e_team[0]]["group"]
+                    if (e_match[1]["away_team"]["code"] == self.matches.team_list[e_team[0]]["group"]) and (e_match[1]["away_team"]["group"] == None):
+                        self.matches.matches[e_match[0]]["away_team"]["group"] = self.matches.team_list[e_team[0]]["group"]
+
+    def group_classification(self, group=None):
+        classif_list = list(sorted(self.matches.team_list, key=lambda k:(k["group"],
+                                                                         -k["statistic"]["points"],
+                                                                         -k["statistic"]["goals_differential"])))
+        if (group != None):
+            self.classification = list(filter(lambda g: group == g["group"] , classif_list))
+        else:
+            self.classification = classif_list
+
+    def match_by_team(self, team_name):
+        match_list = list(filter(lambda t: team_name in (t["home_team"]["country"],
+                                                         t["home_team"]["pt_name"],
+                                                         t["away_team"]["country"],
+                                                         t["away_team"]["pt_name"]), self.matches.matches))
+        return match_list
+
+    def match_by_date(self, match_date):
+        match_list = list(filter(lambda d: datetime.strptime(match_date, date_frmt) == datetime.strptime(d["date"], date_frmt), self.matches.matches))
+        return match_list
+
+    def get_current_matches(self):
+        self.current_matches = list()
+        match_list = load_json_wc("http://worldcup.sfg.io/matches/current", chave=None)
+        for mt in match_list:
+            if (mt["status"] in ("in progress", "half-time")):
+                date = mt["datetime"].split("T")[0]
+                time = mt["datetime"].split("T")[1][0:5]
+                dt_local = match_time_local(date,
+                                            time,
+                                            tmz_brasil)
+
+                m = matches.Match()
+                m.match["date"] = dt_local.strftime(date_frmt)
+                m.match["time"] = dt_local.strftime(time_frmt)
+                m.match["wday"] = week_days[dt_local.weekday()]
+                #m.match["phase"] = mt["stage_name"]
+                m.match["status"] = mt["status"]
+                m.match["stadium"] = mt["location"]
+                m.match["city"] = mt["venue"]
+                m.match["time_match"] = mt["time"]
+
+                ## Home Team ##
+                team = list(filter(lambda t: mt["home_team"]["country"] == t["country"], self.matches.team_list))
+                m.match["home_team"] = team[0]
+
+                m.match["home_goals"] = mt["home_team"]["goals"]
+
+                ## Away Team ##
+                team = list(filter(lambda t: mt["away_team"]["country"] == t["country"], self.matches.team_list))
+                m.match["away_team"] = team[0]
+
+                m.match["away_goals"] = mt["away_team"]["goals"]
+
+                ## Events = Goals ##
+                load_team_events(m, mt)
+
+                self.current_matches.append(m.match)
+
+    def get_next_match():
+        self.next_match = list()
+        today_now = datetime.now()
+        local_datetime = match_time_local(today_now.strftime(date_frmt),
+                                          today_now.strftime(time_frmt),
+                                          pytz.timezone("UTC"))
+        local_time = local_datetime.strftime(time_frmt)
+        count = 1
+        while count <= 10:
+            count += 1
+            all_matches_today = list(filter(lambda lbd: today_now.date() == datetime.strptime(lbd["date"], date_frmt).date(), self.matches.matches))
+            if (len(all_matches_today) == 0):
+                today_now += timedelta(days=1)
+                local_time = "00:00"
+            else:
+                self.next_match = list(filter(lambda lbd: datetime.strptime(horario, time_frmt) <= datetime.strptime(lbd["time"], time_frmt), all_matches_today))
+
+
+
+def load_team_events(match, match_events):
+    if ("home_team_events" in match_events):
+        for ev in match_events["home_team_events"]:
+            if (ev["type_of_event"] in ["goal", "goal-own", "goal-penalty"]):
+                e = matches.Event()
+                e.event["event_type"] = ev["type_of_event"]
+                e.event["time"] = ev["time"]
+                e.event["player"] = " ".join(list(p.capitalize() for p in ev["player"].split(" ")))
+                if (ev["type_of_event"] == "goal-own"):
+                    e.event["player"] += "(GC)"
+                if (ev["type_of_event"] == "goal-penalty"):
+                    e.event["player"] += "(P)"
+                match.add_home_event(e)
+
+    if ("away_team_events" in match_events):
+        for ev in match_events["away_team_events"]:
+            if (ev["type_of_event"] in ["goal", "goal-own", "goal-penalty"]):
+                e = matches.Event()
+                e.event["event_type"] = ev["type_of_event"]
+                e.event["time"] = ev["time"]
+                e.event["player"] = " ".join(list(p.capitalize() for p in ev["player"].split(" ")))
+                if (ev["type_of_event"] == "goal-own"):
+                    e.event["player"] += "(GC)"
+                if (ev["type_of_event"] == "goal-penalty"):
+                    e.event["player"] += "(P)"
+                match.add_away_event(e)
+
+def load_json_wc(url_js, chave=None):
     with urllib.request.urlopen(url_js) as url:
         data = json.loads(url.read().decode())
     if (chave != None):
@@ -35,158 +226,17 @@ def LoadJsonWC(url_js, chave=None):
         result = data
     return result
 
-def main():
-    matchesWC = LoadJsonWC("https://raw.githubusercontent.com/openfootball/world-cup.json/master/2018/worldcup.json", "rounds")
-    for rd in matchesWC:
-        for mt in rd["matches"]:
-            if mt["timezone"] == "UTC+2":
-                tmz_russia = pytz.timezone("Europe/Kaliningrad")
-            if mt["timezone"] == "UTC+3":
-                tmz_russia = pytz.timezone("Europe/Moscow")
-            if mt["timezone"] == "UTC+4":
-                tmz_russia = pytz.timezone("Europe/Samara")
-            if mt["timezone"] == "UTC+5":
-                tmz_russia = pytz.timezone("Asia/Yekaterinburg")
-                
-            matcheDateTimeLocal = MatchTimeLocal(mt["date"],
-                                                 mt["time"],
-                                                 tmz_russia)
-            
-            mt["date_local"] = matcheDateTimeLocal.strftime("%d/%m/%Y")
-            mt["time_local"] = matcheDateTimeLocal.strftime("%H:%M")
+def match_time_local(date, time, timezone):
+    fmt_datetime = "%Y-%m-%d %H:%M:%S"
+    tmz_brasil = pytz.timezone("America/Sao_Paulo")
+    if (timezone == tmz_brasil):
+        timezone = pytz.timezone("UTC")
+    match_time = timezone.localize(datetime.strptime(date + " " + time + ":00" ,fmt_datetime))
+    result = match_time.astimezone(tmz_brasil)
+    return result
 
-            mt["weekday"] = week_days[matcheDateTimeLocal.weekday()]
-            
-            mt["team1"]["flag"] = getFlagEmojiCode(mt["team1"]["name"],
-                                                   mt["team1"]["code"])
-            mt["team2"]["flag"] = getFlagEmojiCode(mt["team2"]["name"],
-                                                   mt["team2"]["code"])
-
-            pt.install()
-            mt["team1"]["name_local"] = _(mt["team1"]["name"])
-            mt["team2"]["name_local"] = _(mt["team2"]["name"])
-
-            if (mt["team1"]["name"] == "England"):
-                mt["team1"]["name_local"] = "Inglaterra"
-
-            if (mt["team2"]["name"] == "England"):
-                mt["team2"]["name_local"] = "Inglaterra"
-
-            if (mt["team1"]["name"] == "South Korea"):
-                mt["team1"]["name_local"] = "Coreia do Sul"
-
-            if (mt["team2"]["name"] == "South Korea"):
-                mt["team2"]["name_local"] = "Coreia do Sul"
-
-    getCountries(matchesWC, countries)
-    getMatchDate(matchesWC, matche_date)
-
-
-
-    return matchesWC
-
-def getClassificacao(grupo):
-    classifWC = LoadJsonWC("http://worldcup.sfg.io/teams/group_results")
-    classificacao = ""
-    group_anterior = ""
-    for wc in classifWC:
-        if (grupo != "") and (grupo != wc["group"]["letter"]):
-            continue
-
-        if (wc["group"]["letter"] != group_anterior):
-            classificacao += "\n`Grupo {} PT PJ SG`\n".format(wc["group"]["letter"].ljust(13))
-            group_anterior = (wc["group"]["letter"])
-            
-        rank = 1
-        for g in wc["group"]["teams"]:          
-            frmt = "`{} {} {}{}{}{}`\n"
-
-            classificacao += frmt.format(rank,
-                                         countries_flag[_(g["team"]["country"])],
-                                         countries[g["team"]["country"]].ljust(14),
-                                         str(g["team"]["points"]).rjust(3),
-                                         str(g["team"]["games_played"]).rjust(3),
-                                         str(g["team"]["goal_differential"]).rjust(3))
-            rank += 1
-            
-    return classificacao
-
-def getCurrMatche():
-    matche_list = list()
-    currMatche = LoadJsonWC("http://worldcup.sfg.io/matches/current")
-    for m in currMatche:
-        pt.install()
-        matche = {"home_team":{}, "away_team":{}}
-        matche["home_team"] = m["home_team"]
-        matche["home_team"]["country"] = _(m["home_team"]["country"])
-        matche["home_team"]["flag"] = countries_flag[m["home_team"]["country"]]
-        if ("home_team_events" in m):
-            goals = list()
-            for g in m["home_team_events"]:
-                if (g["type_of_event"] in ["goal", "goal-own", "goal-penalty"]):
-                    player = " ".join(list(p.capitalize() for p in g["player"].split(" ")))
-                    if(g["type_of_event"] == "goal-own"):
-                        player += "(GC)"
-                    if(g["type_of_event"] == "goal-penalty"):
-                        player += "(P)"
-                    minute = g["time"]
-                    goals.append("%s %s" % (player, minute))
-        matche["home_team"]["events"] = ",".join(goals)
-        matche["home_team"]["goals"] = str(len(list(filter(lambda g: not "(GC)" in g, goals))))
-        
-        matche["away_team"] = m["away_team"]
-        matche["away_team"]["country"] = _(m["away_team"]["country"])
-        matche["away_team"]["flag"] = countries_flag[m["away_team"]["country"]]
-        if ("away_team_events" in m):
-            goals = list()
-            for g in m["away_team_events"]:
-                if (g["type_of_event"] in ["goal", "goal-own", "goal-penalty"]):
-                    player = " ".join(list(p.capitalize() for p in g["player"].split(" ")))
-                    if(g["type_of_event"] == "goal-own"):
-                        player += "(GC)"
-                    if(g["type_of_event"] == "goal-penalty"):
-                        player += "(P)"
-                    minute = g["time"]
-                    goals.append("%s %s" % (player, minute))
-        matche["away_team"]["events"] = ",".join(goals)
-        matche["away_team"]["goals"] = str(len(list(filter(lambda g: not "(GC)" in g, goals))))
-        
-        matche["status"] = m["status"]
-        matche["stadium"] = m["location"]
-        matche["city"] = m["venue"]
-        matche["time"] = m["time"]
-        matche_list.append(matche)
-    return matche_list
-
-def getCountries(wc, countries_name):
-    for match in wc:
-        for mt in match["matches"]:
-            pt.install()
-            if (mt["team1"]["name"] not in countries_name):
-                countries_name[mt["team1"]["name"]] = mt["team1"]["name_local"]
-                countries_flag[mt["team1"]["name"]] = mt["team1"]["flag"]
-            if (mt["team2"]["name"] not in countries_name):
-                countries_name[mt["team2"]["name"]] = mt["team2"]["name_local"]
-                countries_flag[mt["team2"]["name"]] = mt["team2"]["flag"]
-            if (mt["team1"]["name_local"] not in countries_flag):
-                countries_name[mt["team1"]["name_local"]] = mt["team1"]["name_local"]
-                countries_flag[mt["team1"]["name_local"]] = mt["team1"]["flag"]
-            if (mt["team2"]["name_local"] not in countries_flag):
-                countries_name[mt["team2"]["name_local"]] = mt["team2"]["name_local"]
-                countries_flag[mt["team2"]["name_local"]] = mt["team2"]["flag"]
-            if (mt["team1"]["name"] == "South Korea"):
-                countries_name[mt["team1"]["name"]] = mt["team1"]["name_local"]
-                countries_flag["Coreia do Sul"] = mt["team1"]["flag"]
-                countries_name["Korea Republic"] = mt["team1"]["name_local"]
-                countries_flag["Korea Republic"] = mt["team1"]["flag"]
-    
-def getMatchDate(wc, matches_list):
-    for match in wc:
-        for mt in match["matches"]:
-            if (mt["date_local"] not in matches_list):
-                matches_list.append(mt["date_local"])
-
-def getFlagEmojiCode(teamName, teamCode):
+def emoji_code_flag(teamName, teamCode):
+    OFFSET = 127462 - ord('A')
     if (teamName == "England"):
         code = "GB"
     else:
@@ -194,7 +244,6 @@ def getFlagEmojiCode(teamName, teamCode):
             code = pycountry.countries.get(name=teamName).alpha_2
         except KeyError:
             code = pycountry.countries.get(alpha_3=teamCode).alpha_2
-        
     code = code.upper()
     if (teamName == "England"):
         return "\U0001f3f4\U000e0067\U000e0062\U000e0065\U000e006e\U000e0067\U000e007f"
