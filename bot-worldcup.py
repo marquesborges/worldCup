@@ -17,15 +17,23 @@ def get_match(bot, update, args):
     try:
         result = False
         match_str = ""
+        in_line = False
 
         if (len(args) > 0):
             result = ("resultado" in args)
+            
 
         for a in args:
-            match_list = WC.match_by_team(a)
-            if (len(match_list) == 0):
-                match_list = WC.match_by_date(a)
-            match_str = load_match_formated(match_list, result, change_line=False, curr_match=False)
+            if (a != "resultado"):
+                if (a in WC.matches.days_of_match):
+                    match_list = WC.match_by_date(a)
+                elif (a in worldcup.stage_name.values()):
+                    in_line = True
+                    match_list = WC.match_by_phase(a)
+                else:
+                    match_list = WC.match_by_team(a)
+
+            match_str = load_match_formated(match_list, result, change_line=in_line, curr_match=False)
 
         if (match_str == ""):
             match_str = load_match_formated(WC.matches.matches, result, change_line=True, curr_match=False)
@@ -123,7 +131,9 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
             if (result == True) and (match["score1"] == None):
                 continue
 
-            if (match["phase"] == "First stage"):
+            match_str += "Fase: {}".format(match["phase"])
+
+            if (match["phase"] == "Primeira Fase"):
                 match_str += "Grupo {}\n".format(match["home_team"]["group"])
 
             match_str += "{} - {} às {}\n".format(match["wday"],

@@ -19,6 +19,12 @@ week_days = {0: "Segunda",
              4: "Sexta",
              5: "Sábado",
              6: "Domingo"}
+stage_name = {"First stage": "Primeira Fase",
+              "Round of 16": "Oitavas de Final",
+              "Quarter-finals": "Quartas de Final",
+              "Semi-finals": "Semifinal",
+              "Play-off for third place": "Disputa Terceiro Lugar",
+              "Final": "Final"}
 
 class WorldCup:
 
@@ -51,7 +57,7 @@ class WorldCup:
                 m.match["date"] = dt_local.strftime(date_frmt)
                 m.match["time"] = dt_local.strftime(time_frmt)
                 m.match["wday"] = week_days[dt_local.weekday()]
-                m.match["phase"] = wc["stage_name"]
+                m.match["phase"] = stage_name[wc["stage_name"]]
                 m.match["status"] = wc["status"]
                 m.match["stadium"] = wc["location"]
                 m.match["city"] = wc["venue"]
@@ -151,6 +157,13 @@ class WorldCup:
         except Exception as e:
             print("Método: {}-Erro: {}".format("match_by_date",str(e)))
 
+    def match_by_phase(self, match_phase):
+        try:
+            match_list = list(filter(lambda p: match_phase in stage_name.values(), self.matches.matches))
+            return match_list
+        except Exception as e:
+            print("Método: {}-Erro: {}".format("match_by_phase",str(e)))
+
     def get_current_matches(self):
         try:
             self.current_matches = list()
@@ -167,7 +180,7 @@ class WorldCup:
                     m.match["date"] = dt_local.strftime(date_frmt)
                     m.match["time"] = dt_local.strftime(time_frmt)
                     m.match["wday"] = week_days[dt_local.weekday()]
-                    #m.match["phase"] = mt["stage_name"]
+                    #m.match["phase"] = stage_name[mt["stage_name"]]
                     m.match["status"] = mt["status"]
                     m.match["stadium"] = mt["location"]
                     m.match["city"] = mt["venue"]
