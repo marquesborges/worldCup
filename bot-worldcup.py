@@ -18,24 +18,19 @@ def get_match(bot, update, args):
         result = False
         match_str = ""
         in_line = False
-
         if (len(args) > 0):
-            result = ("resultado" in args)
-            
+            arguments = " ".join(list(a for a in args))
 
-        for a in args:
-            if (a != "resultado"):
-                if (a in WC.matches.days_of_match):
-                    match_list = WC.match_by_date(a)
-                elif (a in worldcup.stage_name.values()):
-                    in_line = True
-                    match_list = WC.match_by_phase(a)
-                else:
-                    match_list = WC.match_by_team(a)
+            if (arguments in WC.matches.days_of_match):
+                match_list = WC.match_by_date(arguments)
+            elif (a in worldcup.stage_name.values()):
+                in_line = True
+                match_list = WC.match_by_phase(arguments)
+            else:
+                match_list = WC.match_by_team(arguments)
 
             match_str = load_match_formated(match_list, result, change_line=in_line, curr_match=False)
-
-        if (match_str == ""):
+        else:
             match_str = load_match_formated(WC.matches.matches, result, change_line=True, curr_match=False)
 
         if (len(match_str) > constants.MAX_MESSAGE_LENGTH) or ("#" in match_str):
@@ -131,7 +126,7 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
             if (result == True) and (match["score1"] == None):
                 continue
 
-            match_str += "Fase: {}".format(match["phase"])
+            match_str += "Fase: {}\n".format(match["phase"])
 
             if (match["phase"] == "Primeira Fase"):
                 match_str += "Grupo {}\n".format(match["home_team"]["group"])
