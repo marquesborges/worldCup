@@ -2,7 +2,7 @@
 
 import urllib.request
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import pycountry
 import gettext
@@ -229,18 +229,18 @@ class WorldCup:
                                               pytz.timezone("UTC"))
             local_time = local_datetime.strftime(time_frmt)
             count = 1
-            while count <= 10:
+            
+            while count <= 30:
                 count += 1
                 all_matches_today = list(filter(lambda lbd: today_now.date() == datetime.strptime(lbd["date"], date_frmt).date(), self.matches.matches))
-                if (len(all_matches_today) == 0):
-                    today_now += timedelta(days=1)
-                    local_time = "00:00"
-                else:
+                if (len(all_matches_today) > 0):
                     self.next_match = list(filter(lambda lbd: datetime.strptime(local_time, time_frmt) <= datetime.strptime(lbd["time"], time_frmt), all_matches_today))
+                    if (len(self.next_match) > 0):
+                        break
+                today_now += timedelta(days=1)
+                local_time = "00:00"
         except Exception as e:
             print("Método: {}-Erro: {}".format("get_next_match",str(e)))
-
-
 
 def load_team_events(match, match_events):
     try:
