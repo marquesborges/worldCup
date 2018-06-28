@@ -23,7 +23,7 @@ def get_match(bot, update, args):
 
             if (arguments in WC.matches.days_of_match):
                 match_list = WC.match_by_date(arguments)
-            elif (a in worldcup.stage_name.values()):
+            elif (arguments in worldcup.stage_name.values()):
                 in_line = True
                 match_list = WC.match_by_phase(arguments)
             else:
@@ -181,6 +181,26 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_match_formated",str(e)))
 
+def menu_list(bot, update):
+    try:
+        txt = "Opções disponíveis:\n"
+        txt += "*/partida*: todas as partidas do campeonato. Utilize as 'keywords': \n"
+
+        for phase in worldcup.stage_name.values():
+            txt += "   {}\n".format(phase)
+
+        txt += "...ou informe o nome de alguma seleção ou data da partida.\n\n"
+
+        txt += "*/grupo*: classificação de cada grupo ou do grupo informado.\n\n"
+
+        txt += "*/jogo*: partidas em andamento e, caso não tenha nenhuma, apresenta a(s) próxima(s) partida(s).\n\n"
+
+        txt += "*/atualizar*: atualiza as partidas e respectivos resultados." 
+
+        bot.send_message(chat_id=update.message.chat_id, text=txt, parse_mode=ParseMode.MARKDOWN)
+    except Exception as e:
+        print("Método: {}-Erro: {}".format("update_matches",str(e)))
+        
 def load_all_dispatcher():
     try:
         dispatcher = UPD.dispatcher
@@ -194,8 +214,11 @@ def load_all_dispatcher():
         currMatch_handler= CommandHandler('jogo', current_match, pass_job_queue=True)
         dispatcher.add_handler(currMatch_handler)
 
-        currMatch_handler= CommandHandler('atualiza', update_matches)
-        dispatcher.add_handler(currMatch_handler)
+        update_handler= CommandHandler('atualizar', update_matches)
+        dispatcher.add_handler(update_handler)
+
+        menu_handler= CommandHandler('menu', menu_list)
+        dispatcher.add_handler(menu_handler)
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_all_dispatcher",str(e)))
 
