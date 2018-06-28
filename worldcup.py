@@ -180,7 +180,10 @@ class WorldCup:
                     m.match["date"] = dt_local.strftime(date_frmt)
                     m.match["time"] = dt_local.strftime(time_frmt)
                     m.match["wday"] = week_days[dt_local.weekday()]
-                    #m.match["phase"] = stage_name[mt["stage_name"]]
+
+                    l_phase = list(filter(lambda l: (mt["home_team"]["code"] == l["home_team"]["code"]) and (mt["away_team"]["code"] == l["away_team"]["code"]), self.matches.matches))
+                    if (len(l_phase) > 0):
+                        m.match["phase"] = l_phase["phase"]
                     m.match["status"] = mt["status"]
                     m.match["stadium"] = mt["location"]
                     m.match["city"] = mt["venue"]

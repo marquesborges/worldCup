@@ -138,7 +138,7 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
             if (curr_match == True):
                 if (match["status"] == "in progress"):
                     match_str += "Partida em andamento: {}\n"
-                    if (match["time"] == "half-time"):
+                    if (match["time_match"] == "half-time"):
                         match_str = match_str.format("Intervalo")
                     else:
                         match_str = match_str.format(match["time_match"])
