@@ -88,8 +88,8 @@ def load_current_match(bot, job):
                 if (match["status"] == "in progress"):
                     match_str = load_match_formated([match], result=False, change_line=False, curr_match=True)
                     bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
-                    if (match["time"] == "half-time"):
-                        job.interval = 60*5
+                    if (match["time_match"] == "half-time"):
+                        job.interval = 60*15
                     else:
                         job.interval = 60
         else:
@@ -100,7 +100,7 @@ def load_current_match(bot, job):
                 if (len(match) == 1):
                     match_str = "Próxima partida\n"
                 else:
-                    match_str = "Próximas partidas\n"
+                    match_str = "Próximas pdartidas\n"
                 match_str += load_match_formated(match, result=False, change_line=False, curr_match=False)
             else:
                 match_str = "Nenhuma partida prevista."
