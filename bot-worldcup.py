@@ -105,7 +105,7 @@ def load_current_match(bot, job):
             else:
                 match_str = "Nenhuma partida prevista."
             bot.send_message(chat_id=job.context, text=match_str)
-        print("load_current_match: {}, next in {} seconds".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")), str(job.interval))
+        print("load_current_match: {}, next in {} seconds".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), str(job.interval)))
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_current_match",str(e)))
         job.schedule_removal()
