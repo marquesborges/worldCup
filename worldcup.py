@@ -188,6 +188,7 @@ class WorldCup:
     def get_current_matches(self):
         try:
             self.current_matches = list()
+            self.MATCH_IN_PROGRESS_ID = list()
             match_list = load_json_wc("http://worldcup.sfg.io/matches/current", chave=None)
             for mt in match_list:
                 if (mt["status"] in ("in progress", "half-time")):
