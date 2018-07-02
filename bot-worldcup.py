@@ -89,9 +89,9 @@ def load_current_match(bot, job):
                     match_str = load_match_formated([match], result=False, change_line=False, curr_match=True)
                     bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
                     if (match["time_match"] == "half-time"):
-                        job.interval = wc.MATCH_INTERVAL
+                        job.interval = WC.MATCH_INTERVAL
                     else:
-                        job.interval = wc.CURR_MATCH_MONITOR
+                        job.interval = WC.CURR_MATCH_MONITOR
         else:
             job.schedule_removal()
             WC.get_next_match()
@@ -112,7 +112,7 @@ def load_current_match(bot, job):
 
 def current_match(bot, update, job_queue):
     try:
-        job_queue.run_repeating(load_current_match, interval=wc.CURR_MATCH_MONITOR, first=0, context=update.message.chat_id)
+        job_queue.run_repeating(load_current_match, interval=WC.CURR_MATCH_MONITOR, first=0, context=update.message.chat_id)
     except Exception as e:
         print("Método: {}-Erro: {}".format("current_match",str(e)))
 
