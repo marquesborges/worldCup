@@ -28,6 +28,9 @@ stage_name = {"First stage": "Primeira Fase",
 
 class WorldCup:
 
+    CURR_MATCH_MONITOR = 60 #intervalo para envio de mensagens durante os jogos em andamento
+    MATCH_INTERVAL = 60*15 #intervalo de partida em segundos
+
     def __init__(self):
         try:
             self.classification = []
@@ -90,6 +93,8 @@ class WorldCup:
                                                                wc["home_team"]["code"])
 
                 m.match["home_goals"] = wc["home_team"]["goals"]
+                if ("penalties" in wc["home_team"]):
+                    m.match["home_penalties"] = wc["home_team"]["penalties"]
 
                 ## Away Team ##
                 m.match["away_team"]["country"] = wc["away_team"]["country"]
@@ -107,6 +112,8 @@ class WorldCup:
                                                                wc["away_team"]["code"])
 
                 m.match["away_goals"] = wc["away_team"]["goals"]
+                if ("penalties" in wc["away_team"]):
+                    m.match["away_penalties"] = wc["away_team"]["penalties"]
 
                 ## Events = Goals ##
                 load_team_events(m, wc)
@@ -206,12 +213,16 @@ class WorldCup:
                     m.match["home_team"] = team[0]
 
                     m.match["home_goals"] = mt["home_team"]["goals"]
+                    if ("penalties" in mt["home_team"]):
+                        m.match["home_penalties"] = mt["home_team"]["penalties"]
 
                     ## Away Team ##
                     team = list(filter(lambda t: mt["away_team"]["country"] == t["country"], self.matches.team_list))
                     m.match["away_team"] = team[0]
 
                     m.match["away_goals"] = mt["away_team"]["goals"]
+                    if ("penalties" in mt["away_team"]):
+                        m.match["away_penalties"] = mt["away_team"]["penalties"]
 
                     ## Events = Goals ##
                     load_team_events(m, mt)

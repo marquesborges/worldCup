@@ -89,9 +89,9 @@ def load_current_match(bot, job):
                     match_str = load_match_formated([match], result=False, change_line=False, curr_match=True)
                     bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
                     if (match["time_match"] == "half-time"):
-                        job.interval = 60*15
+                        job.interval = wc.MATCH_INTERVAL
                     else:
-                        job.interval = 60
+                        job.interval = wc.CURR_MATCH_MONITOR
         else:
             job.schedule_removal()
             WC.get_next_match()
@@ -100,19 +100,19 @@ def load_current_match(bot, job):
                 if (len(match) == 1):
                     match_str = "Próxima partida\n"
                 else:
-                    match_str = "Próximas pdartidas\n"
+                    match_str = "Próximas partidas\n"
                 match_str += load_match_formated(match, result=False, change_line=False, curr_match=False)
             else:
                 match_str = "Nenhuma partida prevista."
             bot.send_message(chat_id=job.context, text=match_str)
-        print("load_current_match: {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+        print("load_current_match: {}, next in {} seconds".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")), str(job.interval))
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_current_match",str(e)))
         job.schedule_removal()
 
 def current_match(bot, update, job_queue):
     try:
-        job_queue.run_repeating(load_current_match, interval=60, first=0, context=update.message.chat_id)
+        job_queue.run_repeating(load_current_match, interval=wc.CURR_MATCH_MONITOR, first=0, context=update.message.chat_id)
     except Exception as e:
         print("Método: {}-Erro: {}".format("current_match",str(e)))
 
@@ -149,6 +149,12 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
                     match_str += "Partida em andamento: {}\n"
                     if (match["time_match"] == "half-time"):
                         match_str = match_str.format("Intervalo")
+                    elif ("end of first half" in match["time_match"]):
+                        match_str = match_str.format("Fim 1T Pr.")
+                    elif ("end of second half" in match["time_match"]):
+                        match_str = match_str.format("Fim 2T Pr.")
+                    elif (match["time_match"] == "penalties"):
+                        match_str = match_str.format("Disp.Penalti")
                     else:
                         match_str = match_str.format(match["time_match"])
 
@@ -160,6 +166,12 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
                                                         match["away_team"]["flag"],
                                                         match["away_team"]["pt_name"])
 
+            ## Penalties ##
+            if (match["home_penalties"] != None) and ((match["home_penalties"] != 0) or (match["away_penalties"] != 0)):
+                match_str += "Penalti: {}({}) X ({}){}\n".format(match["home_team"]["flag"],
+                                                            match["home_penalties"],
+                                                            match["away_penalties"],
+                                                            match["away_team"]["flag"])
             ## Team's Events ##
             goals = list()
             for g in match["home_event"]:

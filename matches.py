@@ -47,9 +47,11 @@ class Match:
         self.match["city"] = None
         self.match["home_team"] = home_team.team
         self.match["home_goals"] = None
+        self.match["home_penalties"] = None
         self.match["home_event"] = []
         self.match["away_team"] = away_team.team
         self.match["away_goals"] = None
+        self.match["away_penalties"] = None
         self.match["away_event"] = []
         self.match["time_match"] = None
 
