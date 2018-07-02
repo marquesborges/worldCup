@@ -30,6 +30,8 @@ class WorldCup:
 
     CURR_MATCH_MONITOR = 60 #intervalo para envio de mensagens durante os jogos em andamento
     MATCH_INTERVAL = 60*15 #intervalo de partida em segundos
+    MATCH_IN_PROGRESS = False
+    MATCH_IN_PROGRESS_ID = list()
 
     def __init__(self):
         try:
@@ -200,9 +202,6 @@ class WorldCup:
                     m.match["time"] = dt_local.strftime(time_frmt)
                     m.match["wday"] = week_days[dt_local.weekday()]
 
-                    l_phase = list(filter(lambda l: (mt["home_team"]["code"] == l["home_team"]["code"]) and (mt["away_team"]["code"] == l["away_team"]["code"]), self.matches.matches))
-                    if (len(l_phase) > 0):
-                        m.match["phase"] = l_phase[0]["phase"]
                     m.match["status"] = mt["status"]
                     m.match["stadium"] = mt["location"]
                     m.match["city"] = mt["venue"]
@@ -224,8 +223,23 @@ class WorldCup:
                     if ("penalties" in mt["away_team"]):
                         m.match["away_penalties"] = mt["away_team"]["penalties"]
 
+                    match_filtered = list(filter(lambda l: (m.match["home_team"]["code"] == l[1]["home_team"]["code"]) and
+                                                           (m.match["away_team"]["code"] == l[1]["away_team"]["code"]) and
+                                                           (m.match["date"] == l[1]["date"]) and
+                                                           (m.match["time"] == l[1]["time"]), enumerate(self.matches.matches)))
                     ## Events = Goals ##
                     load_team_events(m, mt)
+
+                    if (len(match_filtered) > 0):
+                        m.match["phase"] = match_filtered[0][1]["phase"]
+                        idx = match_filtered[0][0]
+                        self.matches.matches[idx]["home_goals"] = m.match["home_goals"]
+                        self.matches.matches[idx]["home_penalties"] = m.match["home_penalties"]
+                        self.matches.matches[idx]["home_event"] = m.match["home_event"]
+                        self.matches.matches[idx]["away_goals"] = m.match["away_goals"]
+                        self.matches.matches[idx]["away_penalties"] = m.match["away_penalties"]
+                        self.matches.matches[idx]["away_event"] = m.match["away_event"]
+                        self.MATCH_IN_PROGRESS_ID.append(idx)
 
                     self.current_matches.append(m.match)
         except Exception as e:

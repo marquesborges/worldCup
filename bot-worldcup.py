@@ -84,6 +84,7 @@ def load_current_match(bot, job):
     try:
         WC.get_current_matches()
         if (len(WC.current_matches) > 0):
+            WC.MATCH_IN_PROGRESS = True
             for match in WC.current_matches:
                 if (match["status"] == "in progress"):
                     match_str = load_match_formated([match], result=False, change_line=False, curr_match=True)
@@ -93,7 +94,17 @@ def load_current_match(bot, job):
                     else:
                         job.interval = WC.CURR_MATCH_MONITOR
         else:
-            job.schedule_removal()
+            if (WC.MATCH_IN_PROGRESS == True):
+                WC.load_all_matches()
+                WC.load_match_results()
+                match = list()
+                for i in WC.MATCH_IN_PROGRESS_ID:
+                    match.append(WC.matches.matches[i])
+                match_str = "Fim de Partida\n"
+                match_str += load_match_formated(match, result=False, change_line=False, curr_match=False)
+                bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
+            WC.MATCH_IN_PROGRESS = False                
+            job.schedule_removal()            
             WC.get_next_match()
             match = WC.next_match
             if (len(match) > 0):
