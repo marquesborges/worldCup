@@ -90,7 +90,7 @@ def load_current_match(bot, job):
                     match_str = load_match_formated([match], result=False, change_line=False, curr_match=True)
                     bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
                     if (match["time_match"] == "half-time"):
-                        job.interval = WC.MATCH_INTERVAL
+                        job.interval = WC.MATCH_INTERVAL + 30
                     else:
                         job.interval = WC.CURR_MATCH_MONITOR
         else:
@@ -151,9 +151,6 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
             if (match["phase"] == "Primeira Fase"):
                 match_str += " - Grupo {}".format(match["home_team"]["group"])
 
-            match_str += "\n{} - {} às {}\n".format(match["wday"],
-                                                    match["date"],
-                                                    match["time"])
             ## Date/Time of Match ##
             if (curr_match == True):
                 if (match["status"] == "in progress"):
@@ -161,14 +158,17 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
                     if (match["time_match"] == "half-time"):
                         match_str = match_str.format("Intervalo")
                     elif ("end of first half" in match["time_match"]):
-                        match_str = match_str.format("Fim 1T Pr.")
+                        match_str = match_str.format("Fim 1T Prg.")
                     elif ("end of second half" in match["time_match"]):
-                        match_str = match_str.format("Fim 2T Pr.")
+                        match_str = match_str.format("Fim 2T Prg.")
                     elif (match["time_match"] == "penalties"):
                         match_str = match_str.format("Disp.Penalti")
                     else:
                         match_str = match_str.format(match["time_match"])
 
+            match_str += "\n{} - {} às {}\n".format(match["wday"],
+                                                    match["date"],
+                                                    match["time"])
             ## Match's Team ##
             match_str += "{} {} {} X {} {} {}\n".format(match["home_team"]["flag"],
                                                         match["home_team"]["pt_name"],
@@ -213,6 +213,18 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_match_formated",str(e)))
 
+def welcome_msg(bot, update):
+    try:
+        txt = "Bem vindo *{} {}*(*@{}*),\n".format(update.message.chat["first_name"],
+                                                   update.message.chat["last_name"],
+                                                   update.message.chat["username"])
+        txt += "As informações da _Copa do Mundo 2018_ já estão disponíveis.\n"
+        txt += "Para facilitar vou lhe encaminhar os comandos..."
+        bot.send_message(chat_id=update.message.chat_id, text=txt, parse_mode=ParseMode.MARKDOWN)
+        menu_list(bot, update)
+    except Exception as e:
+        print("Método: {}-Erro: {}".format("welcome_msg",str(e)))
+
 def menu_list(bot, update):
     try:
         txt = "Opções disponíveis:\n"
@@ -223,7 +235,7 @@ def menu_list(bot, update):
 
         txt += "...ou informe o nome de alguma seleção ou data da partida.\n\n"
 
-        txt += "*/grupo*: classificação de cada grupo ou do grupo informado.\n\n"
+        txt += "*/grupo*: classificação de todos os grupos ou do grupo informado.\n\n"
 
         txt += "*/jogo*: partidas em andamento e, caso não tenha nenhuma, apresenta a(s) próxima(s) partida(s).\n\n"
 
@@ -236,6 +248,9 @@ def menu_list(bot, update):
 def load_all_dispatcher():
     try:
         dispatcher = UPD.dispatcher
+
+        start_handler= CommandHandler('start', welcome_msg)
+        dispatcher.add_handler(start_handler)
 
         match_handler= CommandHandler('partida', get_match, pass_args=True)
         dispatcher.add_handler(match_handler)
@@ -251,6 +266,9 @@ def load_all_dispatcher():
 
         menu_handler= CommandHandler('menu', menu_list)
         dispatcher.add_handler(menu_handler)
+
+        start_handler= CommandHandler('start', welcome_msg)
+        dispatcher.add_handler(start_handler)
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_all_dispatcher",str(e)))
 
