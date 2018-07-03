@@ -214,9 +214,8 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
 
 def welcome_msg(bot, update):
     try:
-        txt = "Bem vindo *{} {}*(*@{}*),\n".format(update.message.chat["first_name"],
-                                                   update.message.chat["last_name"],
-                                                   update.message.chat["username"])
+        txt = "Bem vindo *{}* *{}*,\n".format(update.message.from_user["first_name"],
+                                                   update.message.from_user["last_name"])
         txt += "As informações da _Copa do Mundo 2018_ já estão disponíveis.\n"
         txt += "Para facilitar vou lhe encaminhar os comandos..."
         bot.send_message(chat_id=update.message.chat_id, text=txt, parse_mode=ParseMode.MARKDOWN)
@@ -265,9 +264,6 @@ def load_all_dispatcher():
 
         menu_handler= CommandHandler('menu', menu_list)
         dispatcher.add_handler(menu_handler)
-
-        start_handler= CommandHandler('start', welcome_msg)
-        dispatcher.add_handler(start_handler)
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_all_dispatcher",str(e)))
 
