@@ -153,7 +153,7 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
             if (curr_match == True):
                 if (match["status"] == "in progress"):
                     
-                    if (WC.MATCH_OVERTIME == True):
+                    if (WC.MATCH_IN_OVERTIME == True):
                         match_str += "\nProrrogação: {}"
                     else:
                         match_str += "\nPartida em andamento: {}"
