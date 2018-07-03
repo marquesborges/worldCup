@@ -103,7 +103,6 @@ def load_current_match(bot, job):
                 match_str = "Fim de Partida\n"
                 match_str += load_match_formated(match, result=False, change_line=False, curr_match=False)
                 bot.send_message(chat_id=job.context, text=match_str, parse_mode=ParseMode.MARKDOWN)
-            WC.MATCH_IN_PROGRESS = False                
             job.schedule_removal()            
             WC.get_next_match()
             match = WC.next_match

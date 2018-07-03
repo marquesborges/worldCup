@@ -36,7 +36,7 @@ class WorldCup:
     MATCH_INTERVAL = 60*15 #intervalo de partida em segundos
     MATCH_IN_PROGRESS = False
     MATCH_IN_PROGRESS_ID = list()
-    MATCH_OVERTIME = False
+    MATCH_IN_OVERTIME = False
 
     def __init__(self):
         try:
@@ -50,6 +50,10 @@ class WorldCup:
 
     def load_all_matches(self):
         try:
+            self.MATCH_IN_OVERTIME = False
+            self.MATCH_IN_PROGRESS = False
+            self.MATCH_IN_PROGRESS_ID = list()
+            
             self.matches = matches.MatchList()
             wc_list = load_json_wc(url_js="https://worldcup.sfg.io/matches", chave=None)
 
@@ -213,8 +217,8 @@ class WorldCup:
                     m.match["city"] = mt["venue"]
                     
                     if (mt["time"] in match_times):
-                        self.MATCH_OVERTIME = True
-                        m.match["time_mach"] = "half-time"
+                        self.MATCH_IN_OVERTIME = True
+                        m.match["time_match"] = "half-time"
                     else:
                         m.match["time_match"] = mt["time"]
 
