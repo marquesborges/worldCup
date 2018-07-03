@@ -116,7 +116,6 @@ def load_current_match(bot, job):
             else:
                 match_str = "Nenhuma partida prevista."
             bot.send_message(chat_id=job.context, text=match_str)
-        print("load_current_match: {}, next in {} seconds".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), str(job.interval)))
     except Exception as e:
         print("Método: {}-Erro: {}".format("load_current_match",str(e)))
         job.schedule_removal()
@@ -154,7 +153,7 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
             ## Date/Time of Match ##
             if (curr_match == True):
                 if (match["status"] == "in progress"):
-                    match_str += "Partida em andamento: {}\n"
+                    match_str += "\nPartida em andamento: {}"
                     if (match["time_match"] == "half-time"):
                         match_str = match_str.format("Intervalo")
                     elif ("end of first half" in match["time_match"]):
