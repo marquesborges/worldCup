@@ -191,7 +191,7 @@ class WorldCup:
             self.MATCH_IN_PROGRESS_ID = list()
             match_list = load_json_wc("http://worldcup.sfg.io/matches/current", chave=None)
             for mt in match_list:
-                if (mt["status"] in ("in progress", "half-time")):
+                if (mt["status"] in ("in progress", "half-time")) and (mt["time"] != "full-time"):
                     date = mt["datetime"].split("T")[0]
                     time = mt["datetime"].split("T")[1][0:5]
                     dt_local = match_time_local(date,
