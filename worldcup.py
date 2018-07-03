@@ -25,6 +25,10 @@ stage_name = {"First stage": "Primeira Fase",
               "Semi-finals": "Semifinal",
               "Play-off for third place": "Disputa Terceiro Lugar",
               "Final": "Final"}
+match_times = ["end of first half",
+               "end of second half",
+               "end of first half extra time",
+               "end of second half extra time"]
 
 class WorldCup:
 
@@ -32,6 +36,7 @@ class WorldCup:
     MATCH_INTERVAL = 60*15 #intervalo de partida em segundos
     MATCH_IN_PROGRESS = False
     MATCH_IN_PROGRESS_ID = list()
+    MATCH_OVERTIME = False
 
     def __init__(self):
         try:
@@ -206,7 +211,12 @@ class WorldCup:
                     m.match["status"] = mt["status"]
                     m.match["stadium"] = mt["location"]
                     m.match["city"] = mt["venue"]
-                    m.match["time_match"] = mt["time"]
+                    
+                    if (mt["time"] in match_times):
+                        self.MATCH_OVERTIME = True
+                        m.match["time_mach"] = "half-time"
+                    else:
+                        m.match["time_match"] = mt["time"]
 
                     ## Home Team ##
                     team = list(filter(lambda t: mt["home_team"]["country"] == t["country"], self.matches.team_list))

@@ -153,13 +153,14 @@ def load_match_formated(matches_list, result=False, change_line=False, curr_matc
             ## Date/Time of Match ##
             if (curr_match == True):
                 if (match["status"] == "in progress"):
-                    match_str += "\nPartida em andamento: {}"
+                    
+                    if (WC.MATCH_OVERTIME == True):
+                        match_str += "\nProrrogação: {}"
+                    else:
+                        match_str += "\nPartida em andamento: {}"
+                        
                     if (match["time_match"] == "half-time"):
                         match_str = match_str.format("Intervalo")
-                    elif ("end of first half" in match["time_match"]):
-                        match_str = match_str.format("Fim 1T Prg.")
-                    elif ("end of second half" in match["time_match"]):
-                        match_str = match_str.format("Fim 2T Prg.")
                     elif (match["time_match"] == "penalties"):
                         match_str = match_str.format("Disp.Penalti")
                     else:
