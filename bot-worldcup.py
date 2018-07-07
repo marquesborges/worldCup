@@ -59,7 +59,10 @@ def get_classif_group(bot, update, args):
         group_before = ""
         for wc in WC.classification:
             if (wc["group"] != group_before):
-                classification += "\n`Grupo {} PT VT EM DE GP GC SG`\n".format(wc["group"])
+                if (grp == "geral"):
+                    classification += "\n`Seleção  PT VT EM DE GP GC SG`\n"
+                else:
+                    classification += "\n`Grupo {} PT VT EM DE GP GC SG`\n".format(wc["group"])
                 group_before = (wc["group"])
                 rank = 1
             classification += "`{}.{}{}{}{}{}{}{}{}{}`\n".format(rank,
@@ -233,7 +236,7 @@ def menu_list(bot, update):
 
         txt += "...ou informe o nome de alguma seleção ou data da partida.\n\n"
 
-        txt += "*/grupo*: classificação de todos os grupos ou do grupo informado.\n\n"
+        txt += "*/grupo*: classificação de todos os grupos ou do grupo informado ou geral.\n\n"
 
         txt += "*/jogo*: partidas em andamento e, caso não tenha nenhuma, apresenta a(s) próxima(s) partida(s).\n\n"
 
