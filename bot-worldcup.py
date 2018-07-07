@@ -59,9 +59,10 @@ def get_classif_group(bot, update, args):
         group_before = ""
         rank = 1
         for wc in WC.classification:
-            if (wc["group"] != group_before):
-                if (grp == "geral") and (classification == ""):
+            if (wc["group"] != group_before) and (group_before != "geral"):
+                if (grp == "geral"):
                     classification += "\n`Seleção PT VT EM DE GP GC SG`\n"
+                    group_before = "geral"
                 else:
                     classification += "\n`Grupo {} PT VT EM DE GP GC SG`\n".format(wc["group"])
                     group_before = (wc["group"])
