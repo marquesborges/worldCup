@@ -161,10 +161,16 @@ class WorldCup:
 
     def group_classification(self, group=None):
         try:
-            classif_list = list(sorted(self.matches.team_list, key=lambda k:(k["group"],
+            if (group == "geral"):
+              classif_list = list(sorted(self.matches.team_list, key=lambda k:(-k["statistic"]["points"],
+                                                                             -k["statistic"]["goals_differential"],
+                                                                             -k["statistic"]["goals_for"])))
+            
+            else:
+              classif_list = list(sorted(self.matches.team_list, key=lambda k:(k["group"],
                                                                              -k["statistic"]["points"],
                                                                              -k["statistic"]["goals_differential"])))
-            if (group != None):
+            if (group not in ("geral", None)):
                 self.classification = list(filter(lambda g: group == g["group"] , classif_list))
             else:
                 self.classification = classif_list
