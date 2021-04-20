@@ -17,7 +17,7 @@ pipenv==2018.5.18
 pipfile==0.0.2
 pluggy==0.6.0
 ply==3.11
-py==1.5.2
+py==1.10.0
 pycountry==18.5.26
 pycryptodome==3.4.11
 pyquery==1.4.0
